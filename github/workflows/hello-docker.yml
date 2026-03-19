@@ -1,0 +1,31 @@
+name: Docker CI Hello World
+
+# 1. EVENT: Chạy mỗi khi bạn push code lên nhánh main
+on:
+  push:
+    branches: [ "main" ]
+
+# 2. JOBS: Các nhiệm vụ lớn
+jobs:
+  check-system-and-config:
+    # 3. RUNNER: Mượn máy ảo Linux của GitHub
+    runs-on: ubuntu-latest
+
+    # 4. STEPS: Các bước hành động nhỏ
+    steps:
+      # Bước 4.1: Tải code từ Repo của bạn xuống máy ảo này
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Bước 4.2: Kiểm tra xem máy ảo có sẵn Docker không
+      - name: Check Docker version
+        run: docker --version
+
+      # Bước 4.3: Kiểm tra cú pháp file nginx.conf (Cực kỳ hữu ích!)
+      # Robot sẽ dùng một container nginx tạm thời để kiểm tra file của bạn
+      - name: Validate Nginx configuration
+        run: docker run --rm -v ${{ github.workspace }}/nginx.conf:/etc/nginx/nginx.conf:ro nginx:alpine nginx -t
+
+      # Bước 4.4: Lời chào mừng nếu mọi thứ ổn
+      - name: Success Message
+        run: echo "File cấu hình Nginx OK, đã duyệt"
