@@ -1,0 +1,6 @@
+.DS_Store
+*.log
+data/
+prometheus_data/
+grafana_data/
+.env
