@@ -3,7 +3,9 @@ name: Docker CI/CD Pipeline
 on:
   push:
     branches: [ "main" ]
-
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -35,8 +37,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            ${{ secrets.trinhtrung175 }}/nginx-monitor:latest
-            ${{ secrets.trinhtrung175 }}/nginx-monitor:${{ github.sha }}
+            trinhtrung175/nginx-monitor:latest
+            trinhtrung175/nginx-monitor:${{ github.sha }}
 
       - name: Success Message
         run: echo "Done"
