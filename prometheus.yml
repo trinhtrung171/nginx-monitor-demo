@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s # Cứ 15 giây robot sẽ đi lấy dữ liệu một lần
+  evaluation_interval: 15s
+
+scrape_configs:
+  # 1. Tự giám sát chính Prometheus (Optional nhưng nên có)
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 2. Giám sát Nginx thông qua Exporter
+  - job_name: 'nginx_monitoring'
+    static_configs:
+      # 'nginx-exporter' là tên dịch vụ trong file docker-compose.yml
+      - targets: ['nginx-exporter:9113']
