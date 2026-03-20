@@ -1,7 +1,7 @@
 services:
   # 1. Nginx: 
   nginx:
-    image: trinhtrung175/nginx-monitor:latest
+    image: ${DOCKERHUB_USERNAME}/nginx-monitor:latest
     container_name: nginx-server
     ports:
       - "8080:80" # Truy cập web tại localhost:8080
