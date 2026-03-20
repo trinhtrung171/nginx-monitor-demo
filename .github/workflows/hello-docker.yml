@@ -28,10 +28,13 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           context: .
           push: true
-          # CHỖ NÀY: Thay 'TEN_DOCKER_HUB_CUA_BAN' bằng Username Docker của bạn
-          tags: trinhtrung175/nginx-monitor:latest 
+          tags: |
+            ${{ secrets.trinhtrung175 }}/nginx-monitor:latest
+            ${{ secrets.trinhtrung175 }}/nginx-monitor:${{ github.sha }}
 
       - name: Success Message
         run: echo "Chúc mừng! Image đã được đẩy lên Docker Hub thành công."
