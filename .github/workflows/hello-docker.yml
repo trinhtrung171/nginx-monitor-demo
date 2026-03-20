@@ -9,32 +9,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Lấy code từ GitHub về máy ảo
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Kiểm tra cú pháp Nginx (Bảo vệ hệ thống khỏi lỗi cấu hình)
+      # --- ĐÂY LÀ BƯỚC QUAN TRỌNG CẦN THÊM ---
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      # ---------------------------------------
+
       - name: Validate Nginx configuration
         run: docker run --rm -v ${{ github.workspace }}/nginx.conf:/etc/nginx/nginx.conf:ro nginx:alpine nginx -t
 
-      # 3. Đăng nhập vào Docker Hub (Dùng Secret bạn đã cài)
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Build Image từ Dockerfile và Push lên Docker Hub
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           context: .
           push: true
+          # Giờ đây Cache sẽ hoạt động ngon lành nhờ Buildx
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
             ${{ secrets.trinhtrung175 }}/nginx-monitor:latest
             ${{ secrets.trinhtrung175 }}/nginx-monitor:${{ github.sha }}
 
       - name: Success Message
-        run: echo "Chúc mừng! Image đã được đẩy lên Docker Hub thành công."
+        run: echo "Done"
