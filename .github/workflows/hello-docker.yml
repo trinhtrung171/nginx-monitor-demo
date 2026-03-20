@@ -58,5 +58,29 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            trinhtrung175/nginx-monitor:latest
-            trinhtrung175/nginx-monitor:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:${{ github.sha }}
+  # --- JOB 3: KIỂM TRA SỨC KHỎE (SMOKE TEST) ---
+  smoke-test:
+    needs: [build-and-push] # Chỉ chạy sau khi đã đẩy image lên kho
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start system to test
+        run: |
+          sed -i "s/${{ secrets.DOCKERHUB_USERNAME }}/g" docker-compose.yml
+          docker compose up -d
+
+      - name: Wait for services to be ready
+        run: sleep 20 # Đợi 20 giây để Nginx và Grafana khởi động xong
+
+      - name: Check Nginx Health
+        run: curl -s --fail http://localhost:8080/stub_status || exit 1
+
+      - name: Check Grafana Health
+        run: curl -s --fail http://localhost:3000/api/health || exit 1
+
+      - name: Cleanup
+        run: docker compose down
