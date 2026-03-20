@@ -22,8 +22,7 @@ jobs:
       # 2. Soi lỗi Prometheus (Dùng promtool có sẵn trong image prometheus)
       - name: Lint Prometheus configuration
         run: |
-          docker run --rm -v ${{ github.workspace }}/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus:latest promtool check config /etc/prometheus/prometheus.yml
-
+          docker run --rm -v ${{ github.workspace }}/prometheus.yml:/prometheus.yml prom/promtool:latest check config /prometheus.yml
       # 3. Soi lỗi Dockerfile (Sử dụng Hadolint)
       - name: Hadolint Action
         uses: hadolint/hadolint-action@v3.1.0
