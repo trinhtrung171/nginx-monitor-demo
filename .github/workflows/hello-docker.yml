@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
 
 env:
+  # Ép node dùng bản mới nhất để tránh lỗi vặt của GitHub Actions
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -23,7 +24,7 @@ jobs:
             -v ${{ github.workspace }}/nginx.conf:/etc/nginx/nginx.conf:ro \
             nginx:alpine nginx -t
 
-      # 2. Soi lỗi Prometheus (Dùng chính image Prometheus nhưng ghi đè entrypoint)
+      # 2. Soi lỗi Prometheus
       - name: Lint Prometheus configuration
         run: |
           docker run --rm \
@@ -31,15 +32,21 @@ jobs:
             -v ${{ github.workspace }}/alert_rules.yml:/etc/prometheus/alert_rules.yml \
             --entrypoint "" \
             prom/prometheus:latest /bin/promtool check config /etc/prometheus/prometheus.yml
-      # 3. Soi lỗi Dockerfile (Sử dụng Hadolint)
-      - name: Hadolint Action
+
+      # 3. Soi lỗi TOÀN BỘ Dockerfile (Cả gốc và trong folder my-app)
+      - name: Hadolint Monitor Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
 
-  # --- JOB 2: ĐÓNG GÓI VÀ XUẤT KHO ---
+      - name: Hadolint App Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: my-app/Dockerfile
+
+  # --- JOB 2: ĐÓNG GÓI VÀ XUẤT KHO (MULTI-ARCH) ---
   build-and-push:
-    needs: [lint] # QUAN TRỌNG: Chỉ chạy nếu job lint bên trên thành công ✅
+    needs: [lint]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -57,28 +64,29 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      # Build Nginx Monitor (Image 1)
+      - name: Build and push Nginx Monitor
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:${{ github.sha }}
       
+      # Build My Static App (Image 2)
       - name: Build and push My Static App
         uses: docker/build-push-action@v5
         with:
-          context: ./my-app # Trỏ vào đúng thư mục App
+          context: ./my-app
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-static-app:latest
 
   # --- JOB 3: KIỂM TRA SỨC KHỎE (SMOKE TEST) ---
   smoke-test:
-    needs: [build-and-push] # Chỉ chạy sau khi đã đẩy image lên kho
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -91,11 +99,19 @@ jobs:
           docker compose up -d
 
       - name: Wait for services to be ready
-        run: sleep 20 # Đợi 20 giây để Nginx và Grafana khởi động xong
+        run: sleep 20
 
-      - name: Check Nginx Health
+      # Check 1: Nginx Monitor endpoint
+      - name: Check Nginx Status
         run: curl -s --fail http://localhost:8080/stub_status || exit 1
 
+      # Check 2: THÊM BƯỚC NÀY - Check xem App của bạn có hiện ra không
+      - name: Check My Static App content
+        run: |
+          # Kiểm tra xem trang chủ có trả về mã 200 OK không
+          curl -s --fail http://localhost:8080 || exit 1
+
+      # Check 3: Grafana health
       - name: Check Grafana Health
         run: curl -s --fail http://localhost:3000/api/health || exit 1
 
