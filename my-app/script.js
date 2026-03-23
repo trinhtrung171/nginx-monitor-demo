@@ -21,12 +21,12 @@ const CozyWebApp = {
 
     // Default ambient sounds library
     ambientSoundFiles: {
-        rain: { name_key: 'sound_name_rain', icon: 'fas fa-cloud-showers-heavy', url: 'https://www.soundjay.com/nature/rain-04.mp3' },
-        river: { name_key: 'sound_name_river', icon: 'fas fa-water', url: 'https://www.soundjay.com/nature/sounds/river-2.mp3' },
-        lake: { name_key: 'sound_name_lake', icon: 'fas fa-wave-square', url: 'https://www.soundjay.com/nature/sounds/lake-waves-01.mp3' },
-        wind: { name_key: 'sound_name_wind', icon: 'fas fa-wind', url: 'https://www.soundjay.com/nature/wind-1.mp3' },
-        campfire: { name_key: 'sound_name_campfire', icon: 'fas fa-fire', url: 'https://www.soundjay.com/nature/campfire-1.mp3' },
-        ocean: { name_key: 'sound_name_ocean', icon: 'fas fa-water', url: 'https://www.soundjay.com/nature/ocean-wave-1.mp3' },
+        rain: { name_key: 'sound_name_rain', icon: 'fas fa-cloud-showers-heavy', url: 'music/rain.mp3' },
+        river: { name_key: 'sound_name_river', icon: 'fas fa-water', url: 'music/river.mp3' },
+        lake: { name_key: 'sound_name_lake', icon: 'fas fa-wave-square', url: 'music/lake.mp3' },
+        wind: { name_key: 'sound_name_wind', icon: 'fas fa-wind', url: 'music/wind.mp3' },
+        campfire: { name_key: 'sound_name_campfire', icon: 'fas fa-fire', url: 'music/campfire.mp3' },
+        ocean: { name_key: 'sound_name_ocean', icon: 'fas fa-water', url: 'music/ocean.mp3' },
     },
 
     // --- MODIFIED: Changed from hardcoded strings to translation keys ---

@@ -5,15 +5,22 @@ services:
     networks:
       - monitor-net
     # Lưu ý: Không cần mở ports: "80:80" ở đây để tránh xung đột
-    
+
   # 1. Nginx: 
   nginx:
     image: ${DOCKERHUB_USERNAME}/nginx-monitor:latest
     container_name: nginx-server
     ports:
       - "8080:80" # Truy cập web tại localhost:8080
+    volumes:
+          # Dòng này cực kỳ quan trọng:
+          - ./nginx.conf:/etc/nginx/nginx.conf:ro
+          # Thêm dòng này để Nginx có thể truy cập vào các file trong my-app
+          - ./my-app:/usr/share/nginx/html:ro
     networks:
-      - monitor-net
+          - monitor-net
+    depends_on:
+          - my-static-app
 
   # 2. Exporter: Phiên dịch
   nginx-exporter:
