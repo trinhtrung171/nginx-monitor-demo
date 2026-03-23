@@ -13,3 +13,12 @@ scrape_configs:
     static_configs:
       # 'nginx-exporter' là tên dịch vụ trong file docker-compose.yml
       - targets: ['nginx-exporter:9113']
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093

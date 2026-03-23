@@ -1,0 +1,11 @@
+groups:
+  - name: nginx_alerts
+    rules:
+      - alert: NginxServerDown
+        expr: nginx_up == 0
+        for: 30s # Nếu sập quá 30 giây thì mới báo
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx bị sập"
+          description: "Fix đi"

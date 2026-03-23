@@ -60,6 +60,14 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:${{ github.sha }}
+      
+      - name: Build and push My Static App
+        uses: docker/build-push-action@v5
+        with:
+          context: ./my-app # Trỏ vào đúng thư mục App
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-static-app:latest
+
   # --- JOB 3: KIỂM TRA SỨC KHỎE (SMOKE TEST) ---
   smoke-test:
     needs: [build-and-push] # Chỉ chạy sau khi đã đẩy image lên kho
