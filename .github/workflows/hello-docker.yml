@@ -22,7 +22,7 @@ jobs:
       # 2. Soi lỗi Prometheus (Dùng chính image Prometheus nhưng ghi đè entrypoint)
       - name: Lint Prometheus configuration
         run: |
-          docker run --rm -v ${{ github.workspace }}/prometheus.yml:/etc/prometheus/prometheus.yml --entrypoint "" prom/prometheus:latest /bin/promtool check config /etc/prometheus/prometheus.yml
+          docker run --rm -v ${{ github.workspace }}/prometheus:/etc/prometheus --entrypoint "" prom/prometheus:latest /bin/promtool check config /etc/prometheus/prometheus.yml
       # 3. Soi lỗi Dockerfile (Sử dụng Hadolint)
       - name: Hadolint Action
         uses: hadolint/hadolint-action@v3.1.0
