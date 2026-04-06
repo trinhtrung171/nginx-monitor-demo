@@ -9,31 +9,34 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # --- JOB 1: SOI LỖI (LINT) ---
+# --- JOB 1: SOI LỖI (LINT) ---
   lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Bước debug để đảm bảo file thực sự tồn tại trước khi chạy Docker
+      - name: Verify files
+        run: ls -la
+
       # 1. Soi lỗi Nginx
       - name: Lint Nginx configuration
-        run: docker run --rm -v ${{ github.workspace }}/nginx.conf:/etc/nginx/nginx.conf:ro nginx:alpine nginx -t
+        run: docker run --rm -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf:ro nginx:alpine nginx -t
 
-      # 2. Soi lỗi Prometheus (Mount cả thư mục workspace vào /work để tránh lỗi Directory vs File)
+      # 2. Soi lỗi Prometheus (Dùng $(pwd) để mount thư mục hiện tại)
       - name: Lint Prometheus configuration
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/work \
+            -v $(pwd):/work \
             --entrypoint "" \
             prom/prometheus:latest /bin/promtool check config /work/prometheus.yml
 
-      # 3. Soi lỗi Dockerfile (Sử dụng Hadolint)
+      # 3. Soi lỗi Dockerfile
       - name: Hadolint Action
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
-
   # --- JOB 2: ĐÓNG GÓI VÀ XUẤT KHO ---
   build-and-push:
     needs: [lint] # QUAN TRỌNG: Chỉ chạy nếu job lint bên trên thành công ✅
