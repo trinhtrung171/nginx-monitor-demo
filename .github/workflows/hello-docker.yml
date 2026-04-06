@@ -36,21 +36,26 @@ jobs:
 
       - name: Lint Prometheus & Alert Rules
         run: |
-          # 1. Kiểm tra file cấu hình chính (prometheus.yml)
+          # Gắn cả thư mục gốc (workspace) vào thư mục /check trong container
+          # Sau đó trỏ promtool đọc file trong thư mục /check đó
+          
+          echo "--- Checking prometheus.yml ---"
           docker run --rm \
-            -v ${{ github.workspace }}/prometheus.yml:/etc/prometheus/prometheus.yml \
+            -v ${{ github.workspace }}:/check \
             --entrypoint "" \
-            prom/prometheus:latest /bin/promtool check config /etc/prometheus/prometheus.yml
+            prom/prometheus:latest /bin/promtool check config /check/prometheus.yml
 
-          # 2. Kiểm tra file luật cảnh báo (alert_rules.yml)
+          echo "--- Checking alert_rules.yml ---"
           docker run --rm \
-            -v ${{ github.workspace }}/alert_rules.yml:/etc/prometheus/alert_rules.yml \
+            -v ${{ github.workspace }}:/check \
             --entrypoint "" \
-            prom/prometheus:latest /bin/promtool check rules /etc/prometheus/alert_rules.yml
+            prom/prometheus:latest /bin/promtool check rules /check/alert_rules.yml
 
       - name: Lint Promtail configuration
         run: |
-          docker run --rm -v ${{ github.workspace }}/promtail-config.yml:/etc/promtail/config.yml grafana/promtail:latest -check-config -config.file=/etc/promtail/config.yml
+          docker run --rm \
+            -v ${{ github.workspace }}:/check \
+            grafana/promtail:latest -check-config -config.file=/check/promtail-config.yml
 
       - name: Hadolint Action (Check Dockerfile)
         uses: hadolint/hadolint-action@v3.1.0
