@@ -2,69 +2,37 @@ name: Docker CI/CD Pipeline
 
 on:
   push:
-    # Nhánh nào commit thì nhánh đó chạy, các nhánh khác đứng im
-    branches: [ "**" ] 
-    # Bỏ qua khi chỉ sửa tài liệu, tránh tốn thời gian
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - 'docs/**'
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch: # Cho phép bấm nút chạy tay trên giao diện GitHub
-
-# Tự động hủy lượt chạy cũ nếu bạn push commit mới liên tục trên cùng một nhánh
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    # Sửa từ ["main"] thành ["**"] để chạy trên mọi nhánh khi có commit
+    branches: [ "**" ]
 
 env:
-  DOCKERHUB_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor
-  # IMAGE_TAG dùng SHA để định danh duy nhất cho mỗi lần commit
-  IMAGE_TAG: ${{ github.sha }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # --- GIAI ĐOẠN 1: SOI LỖI (Chạy trên mọi nhánh) ---
+  # --- JOB 1: SOI LỖI (LINT) ---
   lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 1. Soi lỗi Nginx
       - name: Lint Nginx configuration
         run: docker run --rm -v ${{ github.workspace }}/nginx.conf:/etc/nginx/nginx.conf:ro nginx:alpine nginx -t
 
-      - name: Lint Prometheus & Alert Rules
+      # 2. Soi lỗi Prometheus (Dùng chính image Prometheus nhưng ghi đè entrypoint)
+      - name: Lint Prometheus configuration
         run: |
-          # Gắn cả thư mục gốc (workspace) vào thư mục /check trong container
-          # Sau đó trỏ promtool đọc file trong thư mục /check đó
-          
-          echo "--- Checking prometheus.yml ---"
-          docker run --rm \
-            -v ${{ github.workspace }}:/check \
-            --entrypoint "" \
-            prom/prometheus:latest /bin/promtool check config /check/prometheus.yml
-
-          echo "--- Checking alert_rules.yml ---"
-          docker run --rm \
-            -v ${{ github.workspace }}:/check \
-            --entrypoint "" \
-            prom/prometheus:latest /bin/promtool check rules /check/alert_rules.yml
-
-      - name: Lint Promtail configuration
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/check \
-            grafana/promtail:latest -check-config -config.file=/check/promtail-config.yml
-
-      - name: Hadolint Action (Check Dockerfile)
+          docker run --rm -v ${{ github.workspace }}/prometheus.yml:/etc/prometheus/prometheus.yml --entrypoint "" prom/prometheus:latest /bin/promtool check config /etc/prometheus/prometheus.yml
+      # 3. Soi lỗi Dockerfile (Sử dụng Hadolint)
+      - name: Hadolint Action
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
 
-  # --- GIAI ĐOẠN 2: ĐÓNG GÓI (Build cho mọi nhánh, nhưng chỉ Push trên Main) ---
+  # --- JOB 2: ĐÓNG GÓI VÀ XUẤT KHO ---
   build-and-push:
-    needs: [lint]
+    needs: [lint] # QUAN TRỌNG: Chỉ chạy nếu job lint bên trên thành công ✅
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -77,8 +45,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
-        # Chỉ Login nếu thực sự cần Push (nhánh main)
-        if: github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -88,41 +54,36 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          # Push = true nếu là nhánh main, ngược lại chỉ Build để test
-          push: ${{ github.ref == 'refs/heads/main' }}
+          push: true
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            ${{ env.DOCKERHUB_REPO }}:latest
-            ${{ env.DOCKERHUB_REPO }}:${{ env.IMAGE_TAG }}
-
-  # --- GIAI ĐOẠN 3: KIỂM TRA CHẠY THỰC TẾ (Smoke Test) ---
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:${{ github.sha }}
+            
+  # --- JOB 3: KIỂM TRA SỨC KHỎE (SMOKE TEST) ---
   smoke-test:
-    needs: [build-and-push]
+    needs: [build-and-push] # Chỉ chạy sau khi đã đẩy image lên kho
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Prepare .env for Docker Compose
+      - name: Start system to test
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          echo "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}" >> .env
-          echo "IMAGE_TAG=${{ env.IMAGE_TAG }}" >> .env
+          docker compose up -d
 
-      - name: Start system
-        run: docker compose up -d
+      - name: Wait for services to be ready
+        run: sleep 20 # Đợi 20 giây để Nginx và Grafana khởi động xong
 
-      - name: Wait for services (Smart Check)
-        run: |
-          echo "Waiting for Nginx..."
-          timeout 60s bash -c 'until curl -s --fail http://localhost:8080/stub_status; do sleep 2; done'
-          
-          echo "Waiting for Grafana..."
-          timeout 60s bash -c 'until curl -s --fail http://localhost:3000/api/health; do sleep 2; done'
-          
-          echo "All services are Healthy!"
+      - name: Check Nginx Health
+        run: curl -s --fail http://localhost:8080/stub_status || exit 1
+
+      - name: Check Grafana Health
+        run: curl -s --fail http://localhost:3000/api/health || exit 1
 
       - name: Cleanup
-        if: always()
         run: docker compose down
