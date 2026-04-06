@@ -36,10 +36,17 @@ jobs:
 
       - name: Lint Prometheus & Alert Rules
         run: |
-          # Kiểm tra file cấu hình Prometheus
-          docker run --rm -v ${{ github.workspace }}:/work --entrypoint "" prom/prometheus:latest /bin/promtool check config /work/prometheus.yml
-          # Kiểm tra file luật cảnh báo (Alert Rules)
-          docker run --rm -v ${{ github.workspace }}:/work --entrypoint "" prom/prometheus:latest /bin/promtool check rules /work/alert_rules.yml
+          # 1. Kiểm tra file cấu hình chính (prometheus.yml)
+          docker run --rm \
+            -v ${{ github.workspace }}/prometheus.yml:/etc/prometheus/prometheus.yml \
+            --entrypoint "" \
+            prom/prometheus:latest /bin/promtool check config /etc/prometheus/prometheus.yml
+
+          # 2. Kiểm tra file luật cảnh báo (alert_rules.yml)
+          docker run --rm \
+            -v ${{ github.workspace }}/alert_rules.yml:/etc/prometheus/alert_rules.yml \
+            --entrypoint "" \
+            prom/prometheus:latest /bin/promtool check rules /etc/prometheus/alert_rules.yml
 
       - name: Lint Promtail configuration
         run: |
