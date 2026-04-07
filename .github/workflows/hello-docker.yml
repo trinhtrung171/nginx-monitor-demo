@@ -2,13 +2,13 @@ name: Docker CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ] # Chạy quy trình trên mọi nhánh để phát hiện lỗi sớm
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # --- JOB 1: SOI LỖI (LINT) ---
+  # --- JOB 1: SOI LỖI (LINT) - CHẠY TRÊN MỌI NHÁNH ---
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -23,15 +23,16 @@ jobs:
       - name: Lint Prometheus configuration
         run: |
           docker run --rm -v ${{ github.workspace }}/prometheus:/etc/prometheus --entrypoint "" prom/prometheus:latest /bin/promtool check config /etc/prometheus/prometheus.yml
+      
       # 3. Soi lỗi Dockerfile (Sử dụng Hadolint)
       - name: Hadolint Action
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
 
-  # --- JOB 2: ĐÓNG GÓI VÀ XUẤT KHO ---
+  # --- JOB 2: ĐÓNG GÓI (VÀ CHỈ XUẤT KHO NẾU LÀ NHÁNH MAIN) ---
   build-and-push:
-    needs: [lint] # QUAN TRỌNG: Chỉ chạy nếu job lint bên trên thành công ✅
+    needs: [lint] # Chỉ chạy nếu job lint bên trên thành công
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -49,21 +50,25 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
+          # ĐIỂM MẤU CHỐT: Chỉ push (đẩy) lên Docker Hub nếu nhánh hiện tại là "main"
+          # Các nhánh khác sẽ chỉ thực hiện việc build image để đảm bảo code chạy tốt
+          push: ${{ github.ref == 'refs/heads/main' }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:${{ github.sha }}
-            
-  # --- JOB 3: KIỂM TRA SỨC KHỎE (SMOKE TEST) ---
+
+  # --- JOB 3: KIỂM TRA SỨC KHỎE (SMOKE TEST) - CHỈ CHẠY TRÊN NHÁNH MAIN ---
   smoke-test:
-    needs: [build-and-push] # Chỉ chạy sau khi đã đẩy image lên kho
+    needs: [build-and-push] 
+    # ĐIỂM MẤU CHỐT: Bỏ qua toàn bộ Job này nếu không phải là nhánh "main"
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
