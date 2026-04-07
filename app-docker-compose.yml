@@ -1,0 +1,31 @@
+services:
+  # 1. Nginx: 
+  nginx:
+    image: ${DOCKERHUB_USERNAME}/nginx-monitor:latest
+    container_name: nginx-server
+    ports:
+      - "8080:80" # Truy cập web tại localhost:8080
+    networks:
+      - global-monitor-net
+
+  # 2. Exporter: Phiên dịch
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-exporter
+    command:
+      - -nginx.scrape-uri=http://nginx:80/stub_status
+    networks:
+      - global-monitor-net
+    depends_on:
+      - nginx
+    # --- THÊM PHẦN NÀY ---
+    labels:
+      - "prometheus.monitor=true"
+      - "prometheus.scrape_port=9113"
+      - "prometheus.job=nginx" # Đặt tên job cho dễ quản lý
+
+networks:
+  global-monitor-net:
+    external: true
+
+  
