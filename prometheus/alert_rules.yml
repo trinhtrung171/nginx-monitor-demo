@@ -2,10 +2,10 @@ groups:
   - name: nginx_alerts
     rules:
       - alert: NginxServerDown
-        expr: nginx_up == 0
+        expr: up{job="nginx"} == 0 OR absent(up{job="nginx"})
         for: 30s # Nếu sập quá 30 giây thì mới báo
         labels:
           severity: critical
         annotations:
-          summary: "Nginx bị sập"
-          description: "Fix đi"
+          summary: "Nginx service is down"
+          description: "The Nginx scrape target has disappeared or is down."
