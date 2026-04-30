@@ -98,7 +98,14 @@ jobs:
           docker compose -f app-docker-compose.yml up -d
 
       - name: Wait for services to be ready
-        run: sleep 60 # Đợi 60 giây để tất cả services khởi động xong
+        run: sleep 120 # Đợi 120 giây để Grafana khởi động đủ
+
+      - name: Debug - Check containers status
+        run: |
+          echo "=== Docker containers ==="
+          docker ps -a
+          echo "=== Grafana logs ==="
+          docker logs grafana 2>&1 | tail -50
 
       - name: Check Nginx Health
         run: curl -s --fail http://localhost:8080/stub_status || exit 1
