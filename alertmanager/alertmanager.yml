@@ -1,0 +1,48 @@
+global:
+  resolve_timeout: 5m
+  # Cấu hình SMTP để gửi email
+  # Note: Sử dụng environment variables từ .env file
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_auth_username: '${SMTP_USERNAME}'    # ← Set từ .env
+  smtp_auth_password: '${SMTP_PASSWORD}'    # ← Set từ .env
+  smtp_require_tls: true
+  smtp_from: '${SMTP_FROM}'                 # ← Set từ .env
+
+# Cấu hình route (đường dẫn) cho cảnh báo
+route:
+  receiver: 'email-notification'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s          # Chờ 10 giây để gom nhóm các cảnh báo
+  group_interval: 10s      # Kiểm tra nhóm mỗi 10 giây
+  repeat_interval: 12h     # Gửi lại cảnh báo mỗi 12 giờ nếu vẫn còn
+
+# Định nghĩa các receiver (người nhận)
+receivers:
+  - name: 'email-notification'
+    email_configs:
+      - to: '${SMTP_TO}'  # ← Email người nhận cảnh báo (từ .env)
+        headers:
+          Subject: '[{{ .GroupLabels.alertname }}] Alert: {{ .Status }}'
+        html: |
+          <h2>Alert: {{ .GroupLabels.alertname }}</h2>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+          <hr>
+          <h3>Details:</h3>
+          {{ range .Alerts }}
+            <p>
+              <strong>Instance:</strong> {{ .Labels.instance }}<br>
+              <strong>Job:</strong> {{ .Labels.job }}<br>
+              <strong>Summary:</strong> {{ .Annotations.summary }}<br>
+              <strong>Description:</strong> {{ .Annotations.description }}<br>
+            </p>
+          {{ end }}
+
+# Inhibit rules (tắt tiếng cảnh báo)
+inhibit_rules:
+  # Nếu instance bị down, không gửi các cảnh báo khác liên quan
+  - source_match:
+      severity: 'critical'
+    target_match_re:
+      severity: 'warning|info'
+    equal: ['alertname', 'instance']

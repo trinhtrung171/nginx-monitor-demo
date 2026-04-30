@@ -1,5 +1,79 @@
-# Nginx Monitoring Ecosystem (CI/CD + Dockerized)
+# Nginx Monitoring Ecosystem (CI/CD + D## Tài khoản Grafana mặc định:
+* **Username:** admin
+* **Password:** Đặt trong file `.env` (biến `GF_PASSWORD`)
 
+---
+
+## 📧 Setup Email Alerts (Alertmanager)
+
+Hệ thống hỗ trợ gửi cảnh báo tự động qua **Email** khi Nginx bị sập.
+
+### Yêu cầu
+* Tài khoản **Gmail** hoặc email SMTP khác
+* Bật **2-Step Verification** trên tài khoản Google (https://myaccount.google.com)
+
+### Các bước cấu hình
+
+#### 1. Tạo App Password trên Gmail
+1. Vào https://myaccount.google.com/apppasswords
+2. Chọn **Mail** → **Windows PC** (hoặc device của bạn)
+3. Click **Create** → Copy password được tạo
+
+#### 2. Tạo file `.env` từ template
+```bash
+cp .env.example .env
+```
+
+#### 3. Cập nhật credentials trong `.env`
+```bash
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your-app-password      # ← Paste password từ bước 1
+SMTP_FROM=your-email@gmail.com
+SMTP_TO=recipient@example.com         # ← Email nhận cảnh báo
+GF_PASSWORD=admin                     # ← Mật khẩu Grafana
+```
+
+#### 4. Tạo file `alertmanager/alertmanager.yml` từ template
+```bash
+cp alertmanager/alertmanager.yml.example alertmanager/alertmanager.yml
+```
+
+#### 5. Khởi động lại hệ thống
+```bash
+docker compose -f monitor-docker-compose.yml down
+docker compose -f monitor-docker-compose.yml up -d
+```
+
+### Test Email Alerts
+
+1. **Tắt app (Nginx) để trigger alert:**
+   ```bash
+   docker compose -f app-docker-compose.yml down
+   ```
+
+2. **Chờ 30-60 giây** để Prometheus detect target down
+
+3. **Kiểm tra email** - bạn sẽ nhận được email cảnh báo
+
+4. **Khôi phục app:**
+   ```bash
+   docker compose -f app-docker-compose.yml up -d
+   ```
+   Alert sẽ tự động resolve khi Nginx quay lại
+
+### Truy cập Alertmanager UI
+* **Alertmanager:** http://localhost:9093
+
+---
+
+## Quy trình CI/CD (GitHub Actions)
+* Mỗi khi có thay đổi được push lên nhánh main, hệ thống sẽ tự động thực hiện:
+* Job Lint: Kiểm tra chất lượng Dockerfile và tính hợp lệ của file cấu hình Prometheus.
+* Job Build & Push:
+  - Khởi tạo môi trường build đa nền tảng (QEMU & Buildx).
+  - Đóng gói Image cho cả linux/amd64 và linux/arm64.
+  - Đẩy Image lên Docker Hub với các tag latest và git-sha.
+  - Chạy smoke test để kiểm tra toàn bộ hệ thống
 Đồ án xây dựng hệ thống giám sát Nginx toàn diện, tự động hóa từ khâu đóng gói (Docker), kiểm tra lỗi (Linting) đến triển khai và hiển thị biểu đồ (Prometheus & Grafana).
 
 ---
