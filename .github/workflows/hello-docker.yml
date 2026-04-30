@@ -74,20 +74,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start system to test
+      - name: Create Docker network
+        run: |
+          docker network create global-monitor-net || true
+
+      - name: Start monitoring stack
+        run: |
+          docker compose -f monitor-docker-compose.yml up -d
+
+      - name: Start application stack
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          docker compose up -d
+          docker compose -f app-docker-compose.yml up -d
 
       - name: Wait for services to be ready
-        run: sleep 20 # Đợi 20 giây để Nginx và Grafana khởi động xong
+        run: sleep 60 # Đợi 60 giây để tất cả services khởi động xong
 
       - name: Check Nginx Health
         run: curl -s --fail http://localhost:8080/stub_status || exit 1
 
+      - name: Check Prometheus Health
+        run: curl -s --fail http://localhost:9090/-/healthy || exit 1
+
       - name: Check Grafana Health
         run: curl -s --fail http://localhost:3000/api/health || exit 1
 
+      - name: Check Alertmanager Health
+        run: curl -s --fail http://localhost:9093/-/healthy || exit 1
+
       - name: Cleanup
-        run: docker compose down
+        run: |
+          docker compose -f app-docker-compose.yml down
+          docker compose -f monitor-docker-compose.yml down
+          docker network rm global-monitor-net || true
