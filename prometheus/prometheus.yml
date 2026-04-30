@@ -37,7 +37,7 @@ scrape_configs:
     params:
       module: [http_2xx]
     static_configs:
-      - targets: ['${VERCEL_URL}']  # Đặt VERCEL_URL trong .env hoặc thay bằng URL tĩnh khi deploy
+      - targets: ['https://cozyapp.vercel.app']  # Vercel app URL (thay bằng URL của bạn nếu khác)
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

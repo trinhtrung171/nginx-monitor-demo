@@ -64,11 +64,10 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/nginx-monitor:${{ github.sha }}
 
-  # --- JOB 3: KIỂM TRA SỨC KHỎE (SMOKE TEST) - CHỈ CHẠY TRÊN NHÁNH MAIN ---
+  # --- JOB 3: KIỂM TRA SỨC KHỎE (SMOKE TEST) - CHẠY TRÊN TẤT CẢ NHÁNH ---
   smoke-test:
     needs: [build-and-push] 
-    # ĐIỂM MẤU CHỐT: Bỏ qua toàn bộ Job này nếu không phải là nhánh "main"
-    if: github.ref == 'refs/heads/main'
+    # Chạy trên tất cả nhánh để phát hiện lỗi sớm
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
