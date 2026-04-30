@@ -74,6 +74,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create .env for smoke test
+        run: |
+          cat > .env << 'EOF'
+          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          SMTP_USERNAME=test@gmail.com
+          SMTP_PASSWORD=test-password
+          SMTP_FROM=test@gmail.com
+          SMTP_TO=test@gmail.com
+          GF_PASSWORD=admin
+          EOF
+
       - name: Create Docker network
         run: |
           docker network create global-monitor-net || true
