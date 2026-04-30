@@ -20,7 +20,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=trunghalo2005 # Mật khẩu đăng nhập
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_PASSWORD} # ← Mật khẩu từ .env
 
     volumes:
       - ./grafana_data:/var/lib/grafana

@@ -1,11 +1,43 @@
 groups:
   - name: nginx_alerts
+    interval: 15s
     rules:
+      # Alert 1: Nginx Server Down
       - alert: NginxServerDown
         expr: up{job="nginx"} == 0 OR absent(up{job="nginx"})
-        for: 30s # Nếu sập quá 30 giây thì mới báo
+        for: 30s
         labels:
           severity: critical
         annotations:
           summary: "Nginx service is down"
           description: "The Nginx scrape target has disappeared or is down."
+
+      # Alert 2: Nginx High Error Rate (5xx errors > 5% trong 5 phút)
+      - alert: NginxHighErrorRate
+        expr: (rate(nginx_http_requests_total{status=~"5.."}[5m]) > 0.05)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Nginx high error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (5xx errors)"
+
+      # Alert 3: Nginx High Active Connections
+      - alert: NginxHighConnections
+        expr: nginx_connections_active > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Nginx has high active connections"
+          description: "Active connections: {{ $value }}"
+
+      # Alert 4: Nginx Response Time High (> 1 second avg)
+      - alert: NginxHighResponseTime
+        expr: (rate(nginx_http_request_duration_seconds_sum[5m]) / rate(nginx_http_request_duration_seconds_count[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Nginx response time is high"
+          description: "Average response time: {{ $value }}s"
