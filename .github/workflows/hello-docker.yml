@@ -74,6 +74,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create .env for smoke test
+        run: |
+          cat > .env << 'EOF'
+          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          SMTP_USERNAME=test@gmail.com
+          SMTP_PASSWORD=test-password
+          SMTP_FROM=test@gmail.com
+          SMTP_TO=test@gmail.com
+          GF_PASSWORD=admin
+          EOF
+
       - name: Create Docker network
         run: |
           docker network create global-monitor-net || true
@@ -89,7 +100,7 @@ jobs:
           docker compose -f app-docker-compose.yml up -d
 
       - name: Wait for services to be ready
-        run: sleep 60 # Đợi 60 giây để tất cả services khởi động xong
+        run: sleep 90 # Đợi 90 giây để tất cả services khởi động xong
 
       - name: Check Nginx Health
         run: curl -s --fail http://localhost:8080/stub_status || exit 1
