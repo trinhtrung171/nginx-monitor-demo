@@ -1,0 +1,11 @@
+groups:
+  - name: blackbox.rules
+    rules:
+      - alert: VercelAppDown
+        expr: probe_success == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ứng dụng Vercel không phản hồi ({{ $labels.instance }})"
+          description: "Probe của Blackbox thất bại cho mục tiêu {{ $labels.instance }}. Kiểm tra triển khai Vercel hoặc DNS."

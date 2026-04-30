@@ -1,12 +1,12 @@
 global:
   resolve_timeout: 5m
   # Cấu hình SMTP để gửi email
-  # Note: Sử dụng environment variables từ .env file
+  # Note: Các giá trị này sẽ được đọc từ biến môi trường bởi entrypoint script
   smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_auth_username: '${SMTP_USERNAME}'    # ← Set từ .env
-  smtp_auth_password: '${SMTP_PASSWORD}'    # ← Set từ .env
+  smtp_auth_username: 'test@gmail.com'
+  smtp_auth_password: 'test-password'
   smtp_require_tls: true
-  smtp_from: '${SMTP_FROM}'                 # ← Set từ .env
+  smtp_from: 'test@gmail.com'
 
 # Cấu hình route (đường dẫn) cho cảnh báo
 route:
@@ -20,7 +20,7 @@ route:
 receivers:
   - name: 'email-notification'
     email_configs:
-      - to: '${SMTP_TO}'  # ← Email người nhận cảnh báo (từ .env)
+      - to: 'test@gmail.com'
         headers:
           Subject: '[{{ .GroupLabels.alertname }}] Alert: {{ .Status }}'
         html: |

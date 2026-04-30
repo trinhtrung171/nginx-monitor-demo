@@ -27,14 +27,32 @@ scrape_configs:
       - source_labels: [__meta_docker_container_name, __meta_docker_container_label_prometheus_scrape_port]
         action: replace
         separator: ':'
-        regex: "/(.*)"
+        regex: "^/(.+):(.+)$"
+        replacement: "${1}:${2}"
         target_label: __address__
+
+  # Blackbox exporter: probe các endpoint bên ngoài (ví dụ: ứng dụng Vercel)
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ['${VERCEL_URL}']  # Đặt VERCEL_URL trong .env hoặc thay bằng URL tĩnh khi deploy
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115  # Service Blackbox exporter trong docker-compose
 
 rule_files:
   - "alert_rules.yml"
+  - "blackbox_rules.yml"
 
 alerting:
   alertmanagers:
     - static_configs:
         - targets:
           - alertmanager:9093
+  

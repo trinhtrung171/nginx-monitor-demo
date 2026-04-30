@@ -4,6 +4,8 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     user: root
+    environment:
+      - VERCEL_URL=${VERCEL_URL}
     volumes:
       - ./prometheus:/etc/prometheus
       - ./prometheus_data:/prometheus
@@ -54,17 +56,77 @@ services:
     networks:
       - global-monitor-net
   
+  # Blackbox exporter: probe external HTTP/HTTPS endpoints (e.g., Vercel apps)
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox-exporter
+    ports:
+      - "9115:9115"
+    networks:
+      - global-monitor-net
+  
   alertmanager:
     image: prom/alertmanager:latest
     container_name: alertmanager
+    environment:
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - SMTP_TO=${SMTP_TO}
     volumes:
       - ./alertmanager:/etc/alertmanager
       - alertmanager_data:/alertmanager
     ports:
       - "9093:9093"
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cat > /tmp/alertmanager-config.yml << 'EOF'
+        global:
+          resolve_timeout: 5m
+          smtp_smarthost: 'smtp.gmail.com:587'
+          smtp_auth_username: '$$SMTP_USERNAME'
+          smtp_auth_password: '$$SMTP_PASSWORD'
+          smtp_require_tls: true
+          smtp_from: '$$SMTP_FROM'
+
+        route:
+          receiver: 'email-notification'
+          group_by: ['alertname', 'cluster', 'service']
+          group_wait: 10s
+          group_interval: 10s
+          repeat_interval: 12h
+
+        receivers:
+          - name: 'email-notification'
+            email_configs:
+              - to: '$$SMTP_TO'
+                headers:
+                  Subject: '[{{ .GroupLabels.alertname }}] Alert: {{ .Status }}'
+                html: |
+                  <h2>Alert: {{ .GroupLabels.alertname }}</h2>
+                  <p><strong>Status:</strong> {{ .Status }}</p>
+                  <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+                  <hr>
+                  <h3>Details:</h3>
+                  {{ range .Alerts }}
+                    <p>
+                      <strong>Instance:</strong> {{ .Labels.instance }}<br>
+                      <strong>Job:</strong> {{ .Labels.job }}<br>
+                      <strong>Summary:</strong> {{ .Annotations.summary }}<br>
+                      <strong>Description:</strong> {{ .Annotations.description }}<br>
+                    </p>
+                  {{ end }}
+
+        inhibit_rules:
+          - source_match:
+              severity: 'critical'
+            target_match_re:
+              severity: 'warning|info'
+            equal: ['alertname', 'instance']
+        EOF
+        /bin/alertmanager --config.file=/tmp/alertmanager-config.yml --storage.path=/alertmanager
     networks:
       - global-monitor-net
 
