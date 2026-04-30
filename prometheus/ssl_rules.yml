@@ -1,0 +1,23 @@
+groups:
+  - name: ssl_alerts
+    interval: 60s
+    rules:
+      # Cảnh báo khi SSL sắp hết hạn (30 ngày)
+      - alert: SSLCertificateExpiring
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL Certificate sắp hết hạn ({{ $labels.instance }})"
+          description: "SSL certificate của {{ $labels.instance }} sẽ hết hạn trong {{ $value | humanize }}d (khoảng 30 ngày). Vui lòng gia hạn ngay!"
+
+      # Cảnh báo khi SSL hết hạn ngay trong 7 ngày
+      - alert: SSLCertificateExpired
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 7
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SSL Certificate hết hạn ngay! ({{ $labels.instance }})"
+          description: "SSL certificate của {{ $labels.instance }} sẽ hết hạn trong {{ $value | humanize }}d. HÀNH ĐỘNG NGAY LẬP TỨC!"
