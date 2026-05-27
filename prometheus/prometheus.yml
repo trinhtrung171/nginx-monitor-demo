@@ -31,13 +31,18 @@ scrape_configs:
         replacement: "${1}:${2}"
         target_label: __address__
 
+  # 3. Giám sát tài nguyên máy chủ (Host Machine) qua Node Exporter
+  - job_name: 'node'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+
   # Blackbox exporter: probe các endpoint bên ngoài (ví dụ: ứng dụng Vercel)
   - job_name: 'blackbox'
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
-      - targets: ['https://cozyapp.vercel.app']  # Vercel app URL (thay bằng URL của bạn nếu khác)
+      - targets: ['https://devshare-eight.vercel.app/']  # DevShare app URL
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -56,4 +61,3 @@ alerting:
     - static_configs:
         - targets:
           - alertmanager:9093
-  

@@ -124,7 +124,7 @@ echo ""
 
 # Test 12: Check Vercel probe
 echo -e "${YELLOW}[TEST 12] Testing Vercel app probe...${NC}"
-vercel_status=$(curl -s 'http://localhost:9115/probe?target=https://cozyapp.vercel.app&module=http_2xx' | grep "probe_success" | grep -o '[01]$')
+vercel_status=$(curl -s 'http://localhost:9115/probe?target=https://devshare-eight.vercel.app/&module=http_2xx' | grep "probe_success" | grep -o '[01]$')
 if [ "$vercel_status" = "1" ]; then
     echo -e "${GREEN}✅ Vercel app is UP (probe_success = 1)${NC}"
 elif [ "$vercel_status" = "0" ]; then

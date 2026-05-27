@@ -106,7 +106,7 @@
             "steps": [
               {
                 "color": "red",
-                "value": null
+                "value": 0
               },
               {
                 "color": "green",
@@ -319,7 +319,7 @@
             "steps": [
               {
                 "color": "red",
-                "value": null
+                "value": 0
               },
               {
                 "color": "orange",
@@ -834,6 +834,92 @@
       ],
       "title": "Response Time Trend (Last 1 Hour)",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "afnb6h9g7hfk0d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "hideFrom": {
+              "viz": false
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 14,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.4.1",
+      "targets": [
+        {
+          "dataset": "railway",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "afnb6h9g7hfk0d"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  a.\"createdAt\" AS \"Time\", \n  a.ip AS \"Client IP\", \n  COALESCE(u.username, 'Guest') AS \"User\",\n  a.\"userAgent\" AS \"Device/Browser\"\nFROM \"AccessLog\" a\nLEFT JOIN \"User\" u ON a.\"userId\" = u.id\nORDER BY a.\"createdAt\" DESC\nLIMIT 100;\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "App Access Total",
+      "type": "table"
     }
   ],
   "preload": false,
@@ -855,6 +941,6 @@
   "timezone": "browser",
   "title": "Vercel App Monitoring (Blackbox)",
   "uid": "vercel-monitoring",
-  "version": 6,
+  "version": 10,
   "weekStart": ""
 }

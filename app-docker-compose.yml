@@ -7,6 +7,7 @@ services:
       - "8080:80" # Truy cập web tại localhost:8080
     networks:
       - global-monitor-net
+    restart: unless-stopped
 
   # 2. Exporter: Phiên dịch
   nginx-exporter:
@@ -25,7 +26,7 @@ services:
       - "prometheus.monitor=true"
       - "prometheus.scrape_port=9113"
       - "prometheus.job=nginx" # Đặt tên job cho dễ quản lý
-    restart: on-failure:3
+    restart: unless-stopped
 
 networks:
   global-monitor-net:

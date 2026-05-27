@@ -14,6 +14,7 @@ services:
       - "9090:9090" # Xem dữ liệu thô tại localhost:9090
     networks:
       - global-monitor-net
+    restart: unless-stopped
     
 # 4. Grafana: Giao diện hiển thị biểu đồ
   grafana:
@@ -35,6 +36,7 @@ services:
       - global-monitor-net
     depends_on:
       - prometheus
+    restart: unless-stopped
   
   # --- LOGGING SYSTEM ---
   loki:
@@ -44,6 +46,7 @@ services:
       - "3100:3100"
     networks:
       - global-monitor-net
+    restart: unless-stopped
 
   promtail:
     image: grafana/promtail:latest
@@ -55,6 +58,7 @@ services:
     command: -config.file=/etc/promtail/config.yml
     networks:
       - global-monitor-net
+    restart: unless-stopped
   
   # Blackbox exporter: probe external HTTP/HTTPS endpoints (e.g., Vercel apps)
   blackbox-exporter:
@@ -64,6 +68,7 @@ services:
       - "9115:9115"
     networks:
       - global-monitor-net
+    restart: unless-stopped
   
   alertmanager:
     image: prom/alertmanager:latest
@@ -81,10 +86,11 @@ services:
     entrypoint: sh -c 'sed "s/\$${SMTP_USERNAME}/$SMTP_USERNAME/g; s/\$${SMTP_PASSWORD}/$SMTP_PASSWORD/g; s/\$${SMTP_FROM}/$SMTP_FROM/g; s/\$${SMTP_TO}/$SMTP_TO/g" /etc/alertmanager/alertmanager.yml > /tmp/alertmanager-config.yml && /bin/alertmanager --config.file=/tmp/alertmanager-config.yml --storage.path=/alertmanager'
     networks:
       - global-monitor-net
+    restart: unless-stopped
 
 networks:
   global-monitor-net:
     external: true
 
 volumes:
-  alertmanager_data: 
+  alertmanager_data:
