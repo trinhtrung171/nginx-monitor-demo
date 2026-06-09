@@ -7,6 +7,17 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+    metric_relabel_configs:
+      # Bỏ các metric nội bộ không có giá trị tham khảo
+      - source_labels: [__name__]
+        action: drop
+        regex: '(prometheus_(engine|tsdb|sd|rule|wal|storage|target|tree|notification|api|webhook|ready|operator|status|config|templates|version|build)_|go_(memstats|sched|gc|routine|info|threads|stack))'
+      - source_labels: [__name__]
+        action: drop
+        regex: '.*(buck_hash_sys|mcache_inuse|mcache_cache|mspan_inuse|mspan_sys|otherspans_sys|gc_sys|last_gc_time)'
+      - source_labels: [__name__]
+        action: keep
+        regex: '(prometheus_target_interval_length_seconds|prometheus_tsdb_head_series|prometheus_tsdb_head_chunks|prometheus_tsdb_size_retentions_total|prometheus_notifications_.*|prometheus_rule_group_.*|up|scrape_duration_seconds|scrape_samples_scraped|scrape_samples_post_metric_relabeling)'
 
   # 2. Tự động giám sát các container có label phù hợp
   - job_name: 'nginx'
