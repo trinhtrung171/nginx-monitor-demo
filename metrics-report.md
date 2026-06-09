@@ -1,339 +1,247 @@
 # Metrics Analysis Report
 
-> Generated: 2026-06-09
+> Generated: 2026-06-09 (Updated)
+> System: macOS (Host) + Docker (Containers)
 
 ## 1. Prometheus Targets Status
 
 | Job | Instance | Status | Last Scrape | Duration |
 |-----|----------|--------|-------------|----------|
-| `prometheus` | localhost:9090 | ✅ UP | OK | 12ms |
-| `nginx` | nginx-exporter:9113 | ✅ UP | OK | 8ms |
-| `node` | host.docker.internal:9100 | ✅ UP | OK | 56ms |
-| `blackbox` | https://devshare-eta.vercel.app/ | ✅ UP | OK | 275ms |
+| `prometheus` | localhost:9090 | ✅ UP | OK | 11ms |
+| `nginx` | nginx-exporter:9113 | ✅ UP | OK | 4ms |
+| `node` | host.docker.internal:9100 | ✅ UP | OK | 64ms |
+| `blackbox` | https://devshare-eta.vercel.app/ | ✅ UP | OK | 615ms |
 
-**All 4 targets healthy. No scrape errors.**
+**All 4 targets UP — no scrape errors.**
 
 ---
 
-## 2. Current Metrics Inventory
+## 2. Current Metrics Inventory (Actual Data)
 
 ### 2.1 Nginx Metrics (nginx-exporter)
 
-| Metric | Type | Has Dashboard? | Notes |
-|--------|------|----------------|-------|
-| `nginx_up` | Gauge | ✅ | Nginx status indicator |
-| `nginx_connections_accepted` | Counter | ✅ | Rate tracked |
-| `nginx_connections_handled` | Counter | ✅ | Rate tracked |
-| `nginx_connections_active` | Gauge | ✅ | Active/waiting/reading/writing |
-| `nginx_connections_reading` | Gauge | ✅ | |
-| `nginx_connections_waiting` | Gauge | ✅ | |
-| `nginx_connections_writing` | Gauge | ✅ | |
-| `nginx_http_requests_total` | Counter | ✅ | Rate tracked, NO status label breakdown |
-| `nginx_exporter_build_info` | Info | ❌ | Metadata only |
+| Metric | Value | Notes |
+|--------|-------|-------|
+| `nginx_up` | 1 | Up |
+| `nginx_connections_active` | 1 | Very low traffic (dev) |
+| `nginx_http_requests_total` | ~0.07 req/s | No `status` label — cannot split 2xx/4xx/5xx |
+| `nginx_connections_accepted/handled` | ~0 | Match — no drops |
 
-**Key Gap**: `nginx_http_requests_total` has NO `status` label — cannot distinguish 2xx/4xx/5xx for error rate tracking.
+**48 CPU time series** available from node_exporter on macOS host.
 
-### 2.2 Host Infrastructure (node_exporter) — NOT visualized
+### 2.2 Host Infrastructure (node_exporter on macOS)
 
-| Category | Available Metrics | Dashboard? |
-|----------|-----------------|------------|
-| CPU | `node_cpu_seconds_total` (48 cores/threads) | ❌ Missing |
-| Memory | `node_memory_total_bytes`, `node_memory_active_bytes`, `node_memory_free_bytes`, etc. | ❌ Missing |
-| Disk | `node_disk_*` (reads/writes/bytes/errors) | ❌ Missing |
-| Network | `node_network_*` (bytes/packets/errors) | ❌ Missing |
-| Load | `node_load1`, `node_load5`, `node_load15` | ❌ Missing |
-| Filesystem | `node_filesystem_*` (size/free/avail) | ❌ Missing |
-| Uptime | `node_boot_time_seconds` | ❌ Missing |
-
-**Critical Gap**: Node exporter is scraping successfully but ZERO dashboards consume its data.
+| Category | Available Metrics | Working? |
+|----------|-----------------|----------|
+| CPU | `node_cpu_seconds_total{mode="idle"}` → 100 - idle% | ✅ |
+| Memory (macOS) | `node_memory_active_bytes`, `wired_bytes`, `free_bytes`, `compressed_bytes`, `inactive_bytes` | ✅ (total: 24GB) |
+| Memory (Linux) | `node_memory_MemAvailable_bytes`, `MemFree_bytes`, `MemTotal_bytes` | ❌ Not on macOS |
+| Disk | `node_disk_read_bytes_total`, `node_disk_written_bytes_total` | ✅ (1 device) |
+| Filesystem | `node_filesystem_size_bytes{mountpoint="/"}`: 460GB | ✅ |
+| Network | 28 interfaces (en0, en5, awdl0, anpi*, lo, etc.) | ✅ Too many |
+| Load | `node_load1`: 2.76, `node_load5`: 2.89 | ✅ |
+| Uptime | System up: 2.6 hours | ✅ |
 
 ### 2.3 Blackbox / External Probe Metrics
 
-| Metric | Dashboard? | Notes |
-|--------|-----------|-------|
-| `probe_success` | ✅ | Probe Status stat + timeline |
-| `probe_http_status_code` | ✅ | HTTP Status stat |
-| `probe_duration_seconds` | ✅ | Response Time stat + trend |
-| `probe_http_duration_seconds{phase}` | ✅ | Phase breakdown (connect/TLS/processing/transfer) |
-| `probe_ssl_earliest_cert_expiry` | ❌ | Not visualized — only alert rules exist |
-| `probe_dns_lookup_time_seconds` | ❌ | Not visualized |
+| Metric | Value | Notes |
+|--------|-------|-------|
+| `probe_success` | 1 (UP) | Vercel app reachable |
+| `probe_duration_seconds` | 183ms | Total response time |
+| `probe_http_duration_seconds{phase="connect"}` | 92ms | TCP connect |
+| `probe_http_duration_seconds{phase="tls"}` | 152ms | TLS handshake |
+| `probe_http_duration_seconds{phase="processing"}` | 268ms | Server processing |
+| `probe_http_duration_seconds{phase="transfer"}` | 13ms | Response transfer |
+| `probe_ssl_earliest_cert_expiry` | 47.7 days remaining | ✅ Healthy |
 
-### 2.4 Go Runtime (from nginx-exporter) — NOT visualized
+### 2.4 Go Runtime (nginx-exporter + node_exporter)
 
-Metrics like `go_goroutines`, `go_memstats_heap_alloc_bytes`, `go_gc_duration_seconds`, `go_threads` are available but unused.
-
----
-
-## 3. Grafana Dashboard Analysis
-
-### Existing Dashboards
-
-| Dashboard | UID | Panels | Data Sources | Issues |
-|-----------|-----|--------|-------------|--------|
-| **Nginx Monitor** | `MsjffzSZz` | 5 | Prometheus | Only nginx metrics, no host infra |
-| **DevShare Full** | `devshare-unified-monitor` | 14 | Prometheus + PostgreSQL | References non-existent OTel metrics + external PostgreSQL |
-| **Blackbox Vercel** | (same as Full) | 12 | Prometheus + PostgreSQL | ⚠️ ~85% duplicate of DevShare Full |
-| **DevShare OTel** | `devshare_otel_monitor` | 6 | Prometheus | Subset of DevShare Full |
-
-### Dashboard Gap Matrix
-
-| Area | Nginx Monitor | DevShare Full | Blackbox Vercel | DevShare OTel |
-|------|:------------:|:-------------:|:---------------:|:-------------:|
-| Nginx connections | ✅ | ❌ | ❌ | ❌ |
-| Nginx request rate | ✅ | ❌ | ❌ | ❌ |
-| Nginx status | ✅ | ❌ | ❌ | ❌ |
-| Blackbox probe | ❌ | ✅ | ✅ | ❌ |
-| Probe SSL expiry | ❌ | ❌ | ❌ | ❌ |
-| Host CPU | ❌ | ✅* | ✅* | ✅* |
-| Host Memory | ❌ | ✅* | ✅* | ✅* |
-| API Request Rate | ❌ | ✅* | ✅* | ✅* |
-| API Latency (p50/p95/p99) | ❌ | ✅* | ✅* | ✅* |
-| API Error Rate | ❌ | ✅* | ✅* | ✅* |
-| Log Table (PostgreSQL) | ❌ | ✅ | ✅ | ❌ |
-| Go Runtime | ❌ | ❌ | ❌ | ❌ |
-| Host Disk I/O | ❌ | ❌ | ❌ | ❌ |
-| Host Network | ❌ | ❌ | ❌ | ❌ |
-| Host Load | ❌ | ❌ | ❌ | ❌ |
-
-> `*` — These panels reference OTel metrics (`process_cpu_usage`, `http_server_requests_total`, etc.) that do NOT exist in local Prometheus. They only work with Grafana Cloud datasource.
+| Metric | Value | Source |
+|--------|-------|--------|
+| `go_goroutines{job="nginx"}` | 10 | nginx-exporter |
+| `go_goroutines{job="node"}` | 7 | node_exporter |
+| `go_memstats_heap_alloc_bytes{job="nginx"}` | ~5MB | nginx-exporter |
 
 ---
 
-## 4. Missing / Recommended Dashboards
+## 3. Grafana Dashboard Changes
 
-### 4.1 Infrastructure Dashboard (HIGH priority)
+### Before (5 dashboards — fragmented, broken)
 
-Track host-level resources from `node_exporter`:
+| Dashboard | Status | Problem |
+|-----------|--------|---------|
+| Nginx Monitor | ✅ Working | Only nginx, no infra |
+| System Overview | ⚠️ Broken | Memory query uses Linux metric (`MemAvailable`) — no data on macOS |
+| DevShare Full | ❌ Broken | References non-existent OTel metrics |
+| Blackbox Vercel | ❌ Duplicate | ~85% duplicate of DevShare Full |
+| DevShare OTel | ❌ Broken | References non-existent OTel metrics |
 
-```
-Panel: CPU Usage %
-  Query: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
-  
-Panel: Memory Usage %
-  Query: (1 - (node_memory_active_bytes / node_memory_total_bytes)) * 100
+### After (2 dashboards — consolidated)
 
-Panel: Disk Usage %
-  Query: (node_filesystem_size_bytes{mount="/"} - node_filesystem_free_bytes{mount="/"}) / node_filesystem_size_bytes{mount="/"} * 100
+| Dashboard | Panels | Covers |
+|-----------|--------|--------|
+| **Unified Monitor - Tổng Quan** | 17 | Nginx + Host Infra + Blackbox + Go Runtime |
+| Nginx Monitor | 5 | Detailed Nginx (kept for backward compat) |
 
-Panel: Disk I/O
-  Query: rate(node_disk_read_bytes_total[5m])
-  Query: rate(node_disk_written_bytes_total[5m])
+### Fixes Applied to Unified Dashboard
 
-Panel: Network I/O
-  Query: rate(node_network_receive_bytes_total{device!="lo"}[5m])
-  Query: rate(node_network_transmit_bytes_total{device!="lo"}[5m])
+1. **Memory Usage** (was blank → now works)
+   - Old: `(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100` — Linux-only
+   - New: Stacked area of `active`, `wired`, `free`, `compressed`, `inactive` bytes — works on macOS
 
-Panel: System Load
-  Query: node_load1 / node_load15  (as % of CPUs)
-  Query: node_load5
-  Query: node_load15
+2. **Network Traffic** (was 28 interfaces → now simplified)
+   - Old: All 28 interfaces including `lo`, `anpi0-2`, `ap1`, `awdl0`
+   - New: All non-loopback interfaces shown but aggregated into single view
 
-Panel: Uptime
-  Query: (time() - node_boot_time_seconds)
-```
+3. **Added New Metrics** (not in any dashboard before)
+   - `go_goroutines{job="nginx"}` — exporter health
+   - `go_memstats_heap_alloc_bytes{job="nginx"}` — exporter memory
+   - `probe_ssl_earliest_cert_expiry` — SSL days remaining
+   - `rate(nginx_http_requests_total[5m])` — RPS
+   - Dropped connection rate
 
-### 4.2 Nginx RED Dashboard (MEDIUM priority)
-
-```
-Rate — Request throughput
-  Query: sum(rate(nginx_http_requests_total[5m]))
-  
-Errors — Handled vs Accepted ratio
-  Query: rate(nginx_connections_handled[5m]) / rate(nginx_connections_accepted[5m])
-  
-Duration — Active connections as proxy for load
-  Query: nginx_connections_active
-```
-
-> **Note**: True RED requires latency histograms. `nginx_http_requests_total` has no `status` label, so 5xx error rate cannot be calculated. Consider adding `$upstream_status` or `log_format` with status codes to nginx config.
-
-### 4.3 SSL Certificates Dashboard (LOW priority)
-
-```
-Panel: SSL Expiry (days remaining)
-  Query: (probe_ssl_earliest_cert_expiry - time()) / 86400
-
-Panel: Certificate Info
-  Query: probe_ssl_last_chain_info (table view)
-
-Panel: SSL Expiry Timeline
-  Query: probe_ssl_earliest_cert_expiry
-```
-
-### 4.4 Go Runtime Dashboard (LOW priority)
-
-```
-Panel: Goroutines
-  Query: go_goroutines{job="nginx"}
-
-Panel: Heap Allocated
-  Query: go_memstats_heap_alloc_bytes{job="nginx"}
-
-Panel: GC Duration
-  Query: rate(go_gc_duration_seconds_sum{job="nginx"}[5m]) / rate(go_gc_duration_seconds_count{job="nginx"}[5m])
-```
-
----
-
-## 5. Metrics to Include vs Remove
-
-### ✅ NÊN ĐƯA VÀO (Should Include)
+### Metrics Removed (No Reference Value)
 
 | Metric | Reason |
 |--------|--------|
-| `rate(nginx_http_requests_total[5m])` | Core throughput (RPS) |
-| `nginx_connections_active/reading/writing/waiting` | Connection pool health |
-| `rate(nginx_connections_accepted[5m])` / `rate(nginx_connections_handled[5m])` | Dropped connection detection |
-| `node_cpu_seconds_total{mode="idle"}` | CPU utilization |
-| `node_memory_active_bytes` / `node_memory_total_bytes` | Memory pressure |
-| `node_filesystem_avail_bytes` / `node_filesystem_size_bytes` | Disk space |
-| `rate(node_disk_read_bytes_total[5m])` / `rate(node_disk_written_bytes_total[5m])` | Disk I/O bottleneck |
-| `rate(node_network_receive_bytes_total[5m])` / `rate(node_network_transmit_bytes_total[5m])` | Network throughput |
-| `node_load1` / `node_load5` / `node_load15` | Load average trend |
-| `probe_success` | Uptime SLA calculation |
-| `probe_duration_seconds` | External response time |
-| `(probe_ssl_earliest_cert_expiry - time()) / 86400` | SSL expiry countdown |
-| `go_goroutines{job="nginx"}` | Nginx exporter health |
-| `nginx_up` | Quick status check |
-
-### ❌ NÊN BỎ / KHÔNG CÓ GIÁ TRỊ (Remove / No Reference Value)
-
-| Metric | Lý do bỏ (Reason to Remove) |
-|--------|---------------------------|
-| `prometheus_engine_*`, `prometheus_tsdb_*`, `prometheus_sd_*` | Prometheus nội bộ, không liên quan đến application/infra monitoring. Chỉ hữu ích cho admin Prometheus. |
-| `go_memstats_buck_hash_sys_bytes`, `go_memstats_mcache_inuse_bytes`, `go_memstats_mspan_sys_bytes` | Quá chi tiết, không actionable. Chỉ nên giữ `heap_alloc_bytes` và `sys_bytes` tổng thể. |
-| `go_gc_*` dạng bucket/chi tiết (pauses_seconds_bucket, allocs_by_size_bytes_bucket) | Histogram quá mịn, khó đọc. Chỉ cần tổng GC duration. |
-| `go_sched_*` (goroutines_runnable, goroutines_waiting, latencies_seconds) | Scheduler metrics của Go runtime — không cần cho monitoring Nginx. |
-| `probe_http_content_length`, `probe_http_uncompressed_body_length` | Kích thước response không actionable với blackbox probing. |
-| `probe_ip_addr_hash`, `probe_tls_version_info`, `probe_http_version` | Chỉ là thông tin tĩnh (metadata), không có trend. |
-| `probe_http_last_modified_timestamp_seconds` | Header timestamp — không có giá trị monitoring. |
-| `node_power_supply_*` | Pin/battery — chỉ hữu ích cho laptop cá nhân, không phải server. |
-| `node_filesystem_purgeable_bytes` | macOS-specific purgeable count, không cross-platform. |
-| `process_open_fds`, `process_resident_memory_bytes`, `process_virtual_memory_bytes` | Metrics của chính exporter processes (Prometheus, node_exporter), gây nhiễu nếu hiển thị cùng app metrics. |
-| `node_network_noproto_total` | Counter zero trong hầu hết trường hợp. |
-| `probe_http_redirects` | Chỉ có giá trị nếu test redirect logic, không cần monitoring thường xuyên. |
+| Prometheus internal engine/tsdb/sd/target/rule/wal | Only useful for Prometheus admin |
+| Go scheduler metrics (sched_latencies, runqueue) | Too low-level for app monitoring |
+| Go GC bucket histograms (pauses_seconds_bucket) | Too fine-grained; only keep avg |
+| `node_power_supply_*` | Laptop battery — not server |
+| `probe_http_content_length` | Not actionable for blackbox |
+| `probe_ip_addr_hash`, `probe_tls_version_info` | Static metadata, no trend |
+| `process_resident_memory_bytes` | Exporter process memory — not relevant |
 
 ---
 
-## 6. Recommended Grafana Dashboard Structure
+## 4. Unified Dashboard Panel Layout
 
 ```
-1. Nginx Monitor                ← Giữ nguyên + thêm panels
-   ├── Status: nginx_up
-   ├── Active Connections (active/reading/writing/waiting)
-   ├── Processed Connections (accepted/handled rate)
-   └── Request Rate (RPS)
+Row 1:  Tổng Quan (Overview)
+├── Nginx Status          [stat]     nginx_up
+├── Vercel Uptime         [stat]     probe_success
+└── System Uptime         [stat]     time() - node_boot_time_seconds
 
-2. Infrastructure Dashboard     ← MỚI — từ node_exporter
-   ├── CPU Usage %  + Load Average
-   ├── Memory Usage % + breakdown
-   ├── Disk Usage % + Disk I/O
-   └── Network I/O
+Row 2:  Nginx Connections
+├── Active Connections    [timeseries] active/reading/waiting/writing (stacked)
+└── Processed Connections [timeseries] accepted/handled rate
 
-3. External Probe Dashboard      ← Gộp từ DevShare Full + Blackbox Vercel
-   ├── Probe Status + Uptime %
-   ├── Response Time (p50/p95/p99)
-   ├── Phase Breakdown (connect/TLS/processing/transfer)
-   └── SSL Certificate Expiry
+Row 3:  Nginx Requests (RED)
+├── Request Rate (RPS)    [timeseries] rate(nginx_http_requests_total[5m])
+└── Connection Health     [timeseries] accepted - handled = dropped
 
-4. [Remove] DevShare OTel        ← Overlap, không có OTel data local
-5. [Remove] DevShare Full        ← Overlap, refs non-existent OTel metrics
-6. [Remove] Blackbox Vercel      ← Duplicate of DevShare Full
+Row 4:  Host CPU & Memory
+├── CPU Usage %           [timeseries] 100 - idle% (threshold: 70/90)
+└── Memory Usage          [timeseries] active/wired/free/compressed/inactive (stacked)
+
+Row 5:  System Load & Disk
+├── System Load           [timeseries] load1/load5/load15
+├── Disk Usage %          [timeseries] (size-free)/size*100 (threshold: 80/95)
+└── Disk I/O              [timeseries] read/write bytes rate
+
+Row 6:  Network Traffic
+└── Network Traffic       [timeseries] rx/tx bps (aggregated)
+
+Row 7:  External Probe (Blackbox)
+├── Response Time Phase   [timeseries] connect/tls/processing/transfer (stacked)
+└── Probe Duration        [timeseries] total duration + SSL days left
+
+Row 8:  Go Runtime
+├── Goroutines & Heap     [timeseries] go_goroutines + heap_alloc_bytes
+└── GC Activity           [timeseries] avg GC duration + heap objects
 ```
 
 ---
 
-## 7. PromQL Query Cheatsheet
+## 5. PromQL Query Cheatsheet
 
 ### Nginx
-
 ```promql
 # Request rate (RPS)
-sum(rate(nginx_http_requests_total[5m]))
-
-# Dropped connection rate
-rate(nginx_connections_accepted[5m]) - rate(nginx_connections_handled[5m])
+irate(nginx_http_requests_total{instance=~"$instance"}[5m])
 
 # Active connections
-nginx_connections_active
+nginx_connections_active{instance=~"$instance"}
 
-# Connection state breakdown
-nginx_connections_reading
-nginx_connections_waiting
-nginx_connections_writing
+# Dropped connection rate
+rate(nginx_connections_accepted{instance=~"$instance"}[5m]) - rate(nginx_connections_handled{instance=~"$instance"}[5m])
 ```
 
-### Host Infrastructure
-
+### Host Infrastructure (macOS)
 ```promql
 # CPU utilization %
-100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
 
-# Memory utilization %
-(1 - (node_memory_free_bytes / node_memory_total_bytes)) * 100
-
-# Memory breakdown by type
-node_memory_active_bytes
-node_memory_wired_bytes
-node_memory_compressed_bytes
+# Memory used % (macOS approximation)
+(node_memory_active_bytes + node_memory_wired_bytes) / node_memory_total_bytes * 100
 
 # Disk space usage %
-(node_filesystem_size_bytes{mount="/"} - node_filesystem_avail_bytes{mount="/"}) / node_filesystem_size_bytes{mount="/"} * 100
+(node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_free_bytes{mountpoint="/"}) / node_filesystem_size_bytes{mountpoint="/"} * 100
 
-# Disk read/write rate
+# Disk I/O
 rate(node_disk_read_bytes_total[5m])
 rate(node_disk_written_bytes_total[5m])
 
-# Network throughput
-rate(node_network_receive_bytes_total{device!="lo"}[5m])
-rate(node_network_transmit_bytes_total{device!="lo"}[5m])
+# Network (aggregated)
+rate(node_network_receive_bytes_total{device!="lo"}[5m]) * 8
+rate(node_network_transmit_bytes_total{device!="lo"}[5m]) * 8
 
-# System load (as fraction of CPU count)
-node_load1 / count(node_cpu_seconds_total{mode="idle"})
+# System load
+node_load1 / count(node_cpu_seconds_total{mode="idle"}) by(instance)
 ```
 
 ### External Probe
-
 ```promql
-# Uptime over last 24h
+# Uptime %
 avg_over_time(probe_success[24h]) * 100
-
-# Response time by phase (ms)
-probe_http_duration_seconds{phase="connect"} * 1000
-probe_http_duration_seconds{phase="tls"} * 1000
-probe_http_duration_seconds{phase="processing"} * 1000
-probe_http_duration_seconds{phase="transfer"} * 1000
 
 # SSL days remaining
 (probe_ssl_earliest_cert_expiry - time()) / 86400
+
+# Response phase breakdown (ms)
+probe_http_duration_seconds{phase=~"connect|tls|processing|transfer"} * 1000
+```
+
+### Go Runtime
+```promql
+# Goroutines count
+go_goroutines{job="nginx"}
+
+# Heap allocated
+go_memstats_heap_alloc_bytes{job="nginx"}
+
+# Average GC duration
+rate(go_gc_duration_seconds_sum{job="nginx"}[5m]) / rate(go_gc_duration_seconds_count{job="nginx"}[5m])
 ```
 
 ---
 
-## 8. Alerts Assessment
+## 6. Alerts Assessment
 
-| Alert Rule | Expression | Correct? | Issues |
-|-----------|-----------|----------|--------|
-| `NginxServerDown` | `up{job="nginx"} == 0 OR absent(up{job="nginx"}) OR nginx_up{job="nginx"} == 0` | ✅ | Good — multiple conditions cover all failure modes |
-| `NginxHighErrorRate` | `rate(nginx_http_requests_total{status=~"5.."}[5m]) > 0.05` | ❌ | `nginx_http_requests_total` has **no `status` label** — alert will NEVER fire |
-| `NginxHighConnections` | `nginx_connections_active > 1000` | ✅ | Simple, actionable |
-| `NginxHighResponseTime` | `rate(nginx_http_request_duration_seconds_sum[5m]) / rate(nginx_http_request_duration_seconds_count[5m]) > 1` | ❌ | `nginx_http_request_duration_seconds_*` does NOT exist in nginx-exporter — alert will NEVER fire |
-| `VercelAppDown` | `probe_success{job="blackbox"} == 0` | ✅ | Correct |
-| `SSLCertificateExpiring` | `(probe_ssl_earliest_cert_expiry - time()) / 86400 < 30` | ✅ | Correct |
-| `SSLCertificateExpired` | `(probe_ssl_earliest_cert_expiry - time()) / 86400 < 7` | ✅ | Correct |
+| Alert Rule | Status | Notes |
+|-----------|--------|-------|
+| `NginxServerDown` | ✅ Correct | Multi-condition (up + absent + nginx_up) |
+| `NginxRequestRateDrop` | ✅ Correct | rate < 1 req/s for 5m |
+| `NginxHighConnections` | ✅ Correct | > 1000 active |
+| `NginxConnectionDrain` | ✅ Correct | > 500 waiting |
+| `VercelAppDown` | ✅ Correct | probe_success == 0 |
+| `SSLCertificateExpiring` | ✅ Correct | < 30 days |
+| `SSLCertificateExpired` | ✅ Correct | < 7 days |
 
-**2 broken alert rules** — `NginxHighErrorRate` and `NginxHighResponseTime` reference non-existent metric labels. They will never trigger.
+**No broken alert rules** — previously broken rules (`NginxHighErrorRate`, `NginxHighResponseTime`) have been removed.
 
 ---
 
-## 9. Recommendations Summary
+## 7. Summary of Changes
 
-| # | Issue | Severity | Action |
-|---|-------|----------|--------|
-| 1 | **Node exporter data not visualized** | High | Create Infrastructure dashboard with CPU/Memory/Disk/Network panels |
-| 2 | **DevShare dashboards reference missing OTel metrics** | High | Remove or adapt — local Prometheus lacks `process_cpu_usage`, `http_server_requests_total`, etc. |
-| 3 | **Dashboard duplication** (DevShare Full ≈ Blackbox Vercel ≈ OTel) | Medium | Consolidate into single External Probe dashboard |
-| 4 | **Alert rules referencing non-existent metrics** (NginxHighErrorRate, NginxHighResponseTime) | Medium | Fix expressions or remove rules |
-| 5 | **No RED dashboard for Nginx** | Low | Add latency proxy (active connections as load indicator) |
-| 6 | **No SSL expiry visualization** | Low | Add probe_ssl_earliest_cert_expiry panel to external dashboard |
-| 7 | **Go runtime metrics unused** | Low | Optional: lightweight goroutines + heap panel |
+| # | Change | Reason |
+|---|--------|--------|
+| 1 | ✅ **New Unified Monitor dashboard** | Consolidate 5 fragmented dashboards into 1 |
+| 2 | ✅ **Fixed Memory Usage panel** | macOS uses `active_bytes/wired_bytes/free_bytes`, not Linux `MemAvailable` |
+| 3 | ✅ **Simplified Network Traffic** | Show all non-loopback interfaces (was 28, too noisy) |
+| 4 | ✅ **Added Go Runtime panels** | goroutines + heap alloc + GC for exporter health |
+| 5 | ✅ **Added SSL Expiry panel** | Visual countdown for TLS cert renewal |
+| 6 | ✅ **Added Connection Health panel** | Dropped connection rate tracking |
+| 7 | ✅ **Removed 3 broken dashboards** | DevShare Full, Blackbox Vercel, DevShare OTel — all reference non-existent OTel metrics |
+| 8 | ✅ **Removed System Overview** | Merged into Unified Monitor |
+| 9 | ✅ **Kept Nginx Monitor** | Backward compat for detailed nginx view |
