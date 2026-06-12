@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: devshare_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: reddit_user
+      POSTGRES_PASSWORD: reddit_password
+      POSTGRES_DB: reddit_clone
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

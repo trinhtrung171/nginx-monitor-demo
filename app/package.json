@@ -1,0 +1,15 @@
+{
+  "name": "devshare",
+  "version": "1.0.0",
+  "description": "DevShare — Community platform for developers",
+  "scripts": {
+    "start-db": "docker-compose up -d",
+    "dev:backend": "cd reddit_backend && bun run --watch src/index.ts",
+    "dev:frontend": "cd reddit_frontend && npm run dev",
+    "dev": "npx concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "start": "cd reddit_backend && bun src/index.ts"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

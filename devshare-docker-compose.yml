@@ -1,0 +1,44 @@
+services:
+  devshare-db:
+    image: postgres:15-alpine
+    container_name: devshare_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: reddit_user
+      POSTGRES_PASSWORD: reddit_password
+      POSTGRES_DB: reddit_clone
+    ports:
+      - "5433:5432"
+    volumes:
+      - devshare_postgres_data:/var/lib/postgresql/data
+    networks:
+      - global-monitor-net
+
+  devshare-backend:
+    build:
+      context: /Users/a123/Documents/GitHub/devshare/reddit_backend
+      dockerfile: Dockerfile
+    container_name: devshare-backend
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: "postgresql://reddit_user:reddit_password@devshare-db:5432/reddit_clone"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_SERVICE_NAME: "devshare-backend"
+      PUBLIC_URL: "http://localhost:3001"
+      PORT: "3001"
+    volumes:
+      - devshare_uploads:/app/public/uploads
+    networks:
+      - global-monitor-net
+    depends_on:
+      - devshare-db
+    restart: unless-stopped
+
+volumes:
+  devshare_postgres_data:
+  devshare_uploads:
+
+networks:
+  global-monitor-net:
+    external: true

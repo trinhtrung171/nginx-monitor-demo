@@ -1,9 +1,25 @@
-services: 
+services:
+  # Opentelemetry Collector: Nhận OTLP metric từ backend, expose Prometheus endpoint
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector.yml"]
+    volumes:
+      - ./otel-collector/otel-collector.yml:/etc/otel-collector.yml
+    ports:
+      - "4318:4318"   # OTLP HTTP receiver (cho backend gửi metric)
+      - "8889:8889"   # Prometheus metrics endpoint (cho Prometheus scrape)
+    networks:
+      - global-monitor-net
+    restart: unless-stopped
+
   # 3. Prometheus: Lưu trữ dữ liệu
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     user: root
+    environment:
+      - VERCEL_URL=${VERCEL_URL}
     volumes:
       - ./prometheus:/etc/prometheus
       - ./prometheus_data:/prometheus
@@ -12,6 +28,7 @@ services:
       - "9090:9090" # Xem dữ liệu thô tại localhost:9090
     networks:
       - global-monitor-net
+    restart: unless-stopped
     
 # 4. Grafana: Giao diện hiển thị biểu đồ
   grafana:
@@ -33,6 +50,7 @@ services:
       - global-monitor-net
     depends_on:
       - prometheus
+    restart: unless-stopped
   
   # --- LOGGING SYSTEM ---
   loki:
@@ -42,6 +60,7 @@ services:
       - "3100:3100"
     networks:
       - global-monitor-net
+    restart: unless-stopped
 
   promtail:
     image: grafana/promtail:latest
@@ -53,24 +72,39 @@ services:
     command: -config.file=/etc/promtail/config.yml
     networks:
       - global-monitor-net
+    restart: unless-stopped
+  
+  # Blackbox exporter: probe external HTTP/HTTPS endpoints (e.g., Vercel apps)
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox-exporter
+    ports:
+      - "9115:9115"
+    networks:
+      - global-monitor-net
+    restart: unless-stopped
   
   alertmanager:
     image: prom/alertmanager:latest
     container_name: alertmanager
+    environment:
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - SMTP_TO=${SMTP_TO}
     volumes:
       - ./alertmanager:/etc/alertmanager
       - alertmanager_data:/alertmanager
     ports:
       - "9093:9093"
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
+    entrypoint: sh -c 'sed "s/\$${SMTP_USERNAME}/$SMTP_USERNAME/g; s/\$${SMTP_PASSWORD}/$SMTP_PASSWORD/g; s/\$${SMTP_FROM}/$SMTP_FROM/g; s/\$${SMTP_TO}/$SMTP_TO/g" /etc/alertmanager/alertmanager.yml > /tmp/alertmanager-config.yml && /bin/alertmanager --config.file=/tmp/alertmanager-config.yml --storage.path=/alertmanager'
     networks:
       - global-monitor-net
+    restart: unless-stopped
 
 networks:
   global-monitor-net:
     external: true
 
 volumes:
-  alertmanager_data: 
+  alertmanager_data:

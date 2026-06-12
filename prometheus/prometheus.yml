@@ -7,6 +7,17 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+    metric_relabel_configs:
+      # Bỏ các metric nội bộ không có giá trị tham khảo
+      - source_labels: [__name__]
+        action: drop
+        regex: '(prometheus_(engine|tsdb|sd|rule|wal|storage|target|tree|notification|api|webhook|ready|operator|status|config|templates|version|build)_|go_(memstats|sched|gc|routine|info|threads|stack))'
+      - source_labels: [__name__]
+        action: drop
+        regex: '.*(buck_hash_sys|mcache_inuse|mcache_cache|mspan_inuse|mspan_sys|otherspans_sys|gc_sys|last_gc_time)'
+      - source_labels: [__name__]
+        action: keep
+        regex: '(prometheus_target_interval_length_seconds|prometheus_tsdb_head_series|prometheus_tsdb_head_chunks|prometheus_tsdb_size_retentions_total|prometheus_notifications_.*|prometheus_rule_group_.*|up|scrape_duration_seconds|scrape_samples_scraped|scrape_samples_post_metric_relabeling)'
 
   # 2. Tự động giám sát các container có label phù hợp
   - job_name: 'nginx'
@@ -27,11 +38,39 @@ scrape_configs:
       - source_labels: [__meta_docker_container_name, __meta_docker_container_label_prometheus_scrape_port]
         action: replace
         separator: ':'
-        regex: "/(.*)"
+        regex: "^/(.+):(.+)$"
+        replacement: "${1}:${2}"
         target_label: __address__
+
+  # 3. Giám sát tài nguyên máy chủ (Host Machine) qua Node Exporter
+  - job_name: 'node'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+
+  # Blackbox exporter: probe các endpoint bên ngoài (ví dụ: ứng dụng Vercel)
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ['https://devshare-eta.vercel.app/']  # DevShare app URL
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115  # Service Blackbox exporter trong docker-compose
+
+  # OTel Collector: Prometheus metrics từ OTel Collector (nhận OTLP từ backend)
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
 
 rule_files:
   - "alert_rules.yml"
+  - "blackbox_rules.yml"
+  - "ssl_rules.yml"
 
 alerting:
   alertmanagers:
