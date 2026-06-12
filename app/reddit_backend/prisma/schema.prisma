@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  email       String   @unique
+  password    String
+  role        Role     @default(USER)
+  bio         String?  @default("")
+  avatarColor String?  @default("#5C7CFA")
+  avatarUrl   String?
+  bannerUrl   String?
+  karma       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts              Post[]
+  comments           Comment[]
+  votes              Vote[]
+  subreddits         Subreddit[] @relation("SubredditModerators")
+  createdSubreddits  Subreddit[] @relation("SubredditCreator")
+  reports    Report[]    @relation("UserReports")
+
+  subscriptions          Subscription[]
+  notificationsReceived  Notification[] @relation("UserNotifications")
+  notificationsTriggered Notification[] @relation("NotificationActor")
+  bookmarks              Bookmark[]
+  accessLogs             AccessLog[]
+}
+
+model Subreddit {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creatorId String?
+  creator   User?   @relation("SubredditCreator", fields: [creatorId], references: [id])
+
+  posts       Post[]
+  moderators  User[]         @relation("SubredditModerators")
+  subscribers Subscription[]
+}
+
+model Post {
+  id            String   @id @default(cuid())
+  title         String
+  content       String? // Rich markdown text
+  mediaUrl      String?  // Legacy single media
+  mediaType     String?  // Legacy: "IMAGE", "VIDEO"
+  attachments   Json?    // Array of { type: "IMAGE"|"VIDEO"|"FILE"|"LINK", url, name?, size?, linkPreview? }
+  linkPreview   Json?    // Legacy single link preview
+  communityNote String?  // Admin community note
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  subredditId String
+  subreddit   Subreddit @relation(fields: [subredditId], references: [id], onDelete: Cascade)
+
+  comments Comment[]
+  votes    Vote[]
+  bookmarks Bookmark[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   Comment?  @relation("CommentToComment", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentToComment")
+
+  votes Vote[]
+}
+
+enum VoteType {
+  UP
+  DOWN
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  type      VoteType
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String?
+  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  targetId  String // Post ID or Comment ID
+  type      String // "POST" or "COMMENT"
+  reason    String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  reporterId String
+  reporter   User   @relation("UserReports", fields: [reporterId], references: [id])
+}
+
+model Subscription {
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subredditId String
+  subreddit   Subreddit @relation(fields: [subredditId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@id([userId, subredditId])
+}
+
+enum NotificationType {
+  POST_IN_SUBREDDIT
+  COMMENT_ON_POST
+  REPLY_TO_COMMENT
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  postId      String?
+  commentId   String?
+  subredditId String?
+}
+
+model Bookmark {
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@id([userId, postId])
+}
+
+model AccessLog {
+  id        String   @id @default(cuid())
+  ip        String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
