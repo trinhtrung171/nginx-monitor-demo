@@ -1,4 +1,18 @@
-services: 
+services:
+  # Opentelemetry Collector: Nhận OTLP metric từ backend, expose Prometheus endpoint
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector.yml"]
+    volumes:
+      - ./otel-collector/otel-collector.yml:/etc/otel-collector.yml
+    ports:
+      - "4318:4318"   # OTLP HTTP receiver (cho backend gửi metric)
+      - "8889:8889"   # Prometheus metrics endpoint (cho Prometheus scrape)
+    networks:
+      - global-monitor-net
+    restart: unless-stopped
+
   # 3. Prometheus: Lưu trữ dữ liệu
   prometheus:
     image: prom/prometheus:latest

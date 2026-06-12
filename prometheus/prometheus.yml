@@ -62,6 +62,11 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox-exporter:9115  # Service Blackbox exporter trong docker-compose
 
+  # OTel Collector: Prometheus metrics từ OTel Collector (nhận OTLP từ backend)
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+
 rule_files:
   - "alert_rules.yml"
   - "blackbox_rules.yml"
