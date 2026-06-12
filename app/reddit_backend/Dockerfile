@@ -7,6 +7,8 @@ RUN bun install
 
 COPY . .
 
+RUN bunx prisma generate
+
 RUN mkdir -p public/uploads
 
 EXPOSE 3001
