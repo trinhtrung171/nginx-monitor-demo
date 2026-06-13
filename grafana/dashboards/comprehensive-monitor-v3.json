@@ -1843,7 +1843,392 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 56
+      },
+      "id": 2000,
+      "panels": [],
+      "title": "3. Nhật Ký Truy Cập Người Dùng (User Access)",
+      "type": "row"
+    },
+    {
+      "id": 2001,
+      "title": "Top 10 IPs",
+      "type": "table",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 57
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "sum by (ip) (count_over_time({service=\"devshare-backend\"} | json [5m]))",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 2002,
+      "title": "Băng thông theo IP (Bandwidth per IP)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 57
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "sum by (ip) (sum_over_time({service=\"devshare-backend\"} | json | unwrap bytes_sent [5m]))",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "opacity"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      }
+    },
+    {
+      "id": 2003,
+      "title": " HTTP Methods",
+      "type": "piechart",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 65
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "sum by (method) (count_over_time({service=\"devshare-backend\"} | json [5m]))",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": []
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "pieType": "pie",
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        }
+      }
+    },
+    {
+      "id": 2004,
+      "title": "HTTP Status Codes Over Time",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 65
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "sum by (status) (count_over_time({service=\"devshare-backend\"} | json [1m]))",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "opacity"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      }
+    },
+    {
+      "id": 2005,
+      "title": "Avg Response Time (Loki)",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 65
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "avg_over_time({service=\"devshare-backend\"} | json | unwrap duration_ms [5m])",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 2006,
+      "title": "User Journey Logs",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 73
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "{service=\"devshare-backend\"} | json | line_format \"IP: {{.ip}} | User: {{.user_id}} | {{.method}} {{.path}} ({{.status}}) | Duration: {{.duration_ms}}ms | UserAgent: {{.user_agent}}\"",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "showTime": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 81
+      },
+      "id": 3000,
+      "panels": [],
+      "title": "4. Truy Vấn Cơ Sở Dữ Liệu (Database Queries)",
+      "type": "row"
+    },
+    {
+      "id": 3001,
+      "title": "Slow Query Count (>200ms)",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 82
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "sum(count_over_time({service=\"devshare-backend\"} | json | type=\"slow_query\" [5m])) or vector(0)",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 3002,
+      "title": "Live Slow Query Log",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 82
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "{service=\"devshare-backend\"} | json | type=\"slow_query\" | line_format \"Slow query duration: {{.duration_ms}}ms | Query: {{.query}} | Params: {{.params}}\"",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "showTime": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 90
       },
       "id": 1042,
       "panels": [],
@@ -1896,7 +2281,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 88
+        "y": 91
       },
       "options": {
         "colorMode": "background",
@@ -1972,7 +2357,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 88
+        "y": 91
       },
       "options": {
         "colorMode": "background",
@@ -2048,7 +2433,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 88
+        "y": 91
       },
       "options": {
         "colorMode": "background",
@@ -2124,7 +2509,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 88
+        "y": 91
       },
       "options": {
         "colorMode": "background",
@@ -2200,7 +2585,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 88
+        "y": 91
       },
       "options": {
         "colorMode": "background",
@@ -2276,7 +2661,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 88
+        "y": 91
       },
       "options": {
         "colorMode": "background",
@@ -2349,7 +2734,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 92
+        "y": 95
       },
       "options": {
         "legend": {
@@ -2430,7 +2815,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 92
+        "y": 95
       },
       "options": {
         "legend": {

@@ -17,10 +17,30 @@ const adapter = new PrismaPg(pool);
 
 export const db =
   globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
+  (() => {
+    const prisma = new PrismaClient({
+      adapter,
+      log: [
+        { emit: "event", level: "query" },
+        { emit: "stdout", level: "error" },
+        { emit: "stdout", level: "warn" },
+      ],
+    });
+
+    prisma.$on("query" as any, (e: any) => {
+      if (e.duration > 200) {
+        console.log(JSON.stringify({
+          timestamp: new Date().toISOString(),
+          type: "slow_query",
+          duration_ms: e.duration,
+          query: e.query,
+          params: e.params,
+        }));
+      }
+    });
+
+    return prisma;
+  })();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
 
