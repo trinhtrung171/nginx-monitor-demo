@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Tổng quan hệ thống Nginx Monitor: Nginx, API App, Runtime (Go/Bun/OTel), Infra (CPU/RAM/Disk/Net), và External Probe",
+  "description": "T\u1ed5ng quan h\u1ec7 th\u1ed1ng Nginx Monitor: Nginx, API App, Runtime (Go/Bun/OTel), Infra (CPU/RAM/Disk/Net), v\u00e0 External Probe",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -588,7 +588,7 @@
       },
       "id": 200,
       "panels": [],
-      "title": "Application API — Traffic Overview",
+      "title": "Application API \u2014 Traffic Overview",
       "type": "row"
     },
     {
@@ -847,12 +847,13 @@
     },
     {
       "datasource": {
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "devshare-postgres"
       },
       "fieldConfig": {
         "defaults": {
+          "unit": "none",
           "color": {
-            "mode": "thresholds"
+            "mode": "none"
           },
           "mappings": [],
           "thresholds": {
@@ -860,11 +861,10 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
-          },
-          "unit": "short"
+          }
         },
         "overrides": []
       },
@@ -892,26 +892,25 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "devshare-postgres"
           },
-          "editorMode": "code",
-          "expr": "sum(rate(app_access_total[5m]))",
-          "legendFormat": "Access Rate",
-          "range": true,
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) as cnt FROM \"AccessLog\" WHERE \"createdAt\" >= NOW() - INTERVAL '24 hours'",
           "refId": "A"
         }
       ],
-      "title": "App Access Rate",
+      "title": "App Accesses (24h)",
       "type": "stat"
     },
     {
       "datasource": {
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "devshare-postgres"
       },
       "fieldConfig": {
         "defaults": {
+          "unit": "none",
           "color": {
-            "mode": "thresholds"
+            "mode": "none"
           },
           "mappings": [],
           "thresholds": {
@@ -919,11 +918,10 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
-          },
-          "unit": "short"
+          }
         },
         "overrides": []
       },
@@ -951,16 +949,14 @@
       "targets": [
         {
           "datasource": {
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "devshare-postgres"
           },
-          "editorMode": "code",
-          "expr": "sum(app_access_total)",
-          "legendFormat": "Total",
-          "range": true,
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) as cnt FROM \"AccessLog\"",
           "refId": "A"
         }
       ],
-      "title": "Total App Accesses",
+      "title": "Total App Accesses (All Time)",
       "type": "stat"
     },
     {
@@ -1387,7 +1383,7 @@
       },
       "id": 300,
       "panels": [],
-      "title": "Application Runtime — Go (nginx-exporter)",
+      "title": "Application Runtime \u2014 Go (nginx-exporter)",
       "type": "row"
     },
     {
@@ -1778,7 +1774,7 @@
       },
       "id": 307,
       "panels": [],
-      "title": "Go Runtime — Heap, GC, Goroutines",
+      "title": "Go Runtime \u2014 Heap, GC, Goroutines",
       "type": "row"
     },
     {
@@ -2303,7 +2299,7 @@
       },
       "id": 400,
       "panels": [],
-      "title": "Infrastructure — CPU & Memory",
+      "title": "Infrastructure \u2014 CPU & Memory",
       "type": "row"
     },
     {
@@ -2441,7 +2437,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "expr": "((node_memory_wired_bytes + node_memory_active_bytes{job=\"node\"}) / node_memory_total_bytes{job=\"node\"}) * 100",
           "legendFormat": "RAM",
           "range": true,
           "refId": "A"
@@ -2602,7 +2598,7 @@
       },
       "id": 405,
       "panels": [],
-      "title": "Infra — CPU, Memory, Disk, Network",
+      "title": "Infra \u2014 CPU, Memory, Disk, Network",
       "type": "row"
     },
     {
@@ -2790,7 +2786,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "expr": "((node_memory_wired_bytes{job=\"node\"} + node_memory_active_bytes{job=\"node\"}) / node_memory_total_bytes{job=\"node\"}) * 100",
           "legendFormat": "RAM {{instance}}",
           "range": true,
           "refId": "A"
@@ -2983,7 +2979,7 @@
       },
       "id": 410,
       "panels": [],
-      "title": "Infra — System Load & Uptime",
+      "title": "Infra \u2014 System Load & Uptime",
       "type": "row"
     },
     {
@@ -3154,11 +3150,95 @@
         "h": 1,
         "w": 24,
         "x": 0,
+        "y": 0
+      },
+      "id": 249,
+      "panels": [],
+      "title": "IP Access Logs (PostgreSQL)",
+      "type": "row"
+    },
+    {
+      "id": 250,
+      "title": "IP Access Logs",
+      "type": "table",
+      "datasource": {
+        "uid": "devshare-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "devshare-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT \n  \"ip\", \n  \"userAgent\", \n  \"createdAt\", \n  \"userId\"\nFROM \"AccessLog\" \nORDER BY \"createdAt\" DESC \nLIMIT 50",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "createdAt"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "dateTime"
+              }
+            ]
+          }
+        ]
+      },
+      "pluginVersion": "8.5.0",
+      "options": {
+        "footer": {
+          "enablePagination": true
+        },
+        "sortBy": [
+          {
+            "displayName": "createdAt",
+            "desc": true
+          }
+        ],
+        "rowHeight": "sm"
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
         "y": 90
       },
       "id": 500,
       "panels": [],
-      "title": "External Probe — Uptime & Response",
+      "title": "External Probe \u2014 Uptime & Response",
       "type": "row"
     },
     {
@@ -3499,7 +3579,7 @@
       },
       "id": 506,
       "panels": [],
-      "title": "External Probe — Response Time & SSL",
+      "title": "External Probe \u2014 Response Time & SSL",
       "type": "row"
     },
     {
@@ -3704,7 +3784,7 @@
       },
       "id": 509,
       "panels": [],
-      "title": "External Probe — SSL & DNS",
+      "title": "External Probe \u2014 SSL & DNS",
       "type": "row"
     },
     {
@@ -3943,7 +4023,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Tổng Quan Hệ Thống — Nginx Monitor",
+  "title": "T\u1ed5ng Quan H\u1ec7 Th\u1ed1ng \u2014 Nginx Monitor",
   "uid": "nginx-monitor-tong-quan",
   "version": 1,
   "weekStart": ""
