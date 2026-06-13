@@ -13,6 +13,7 @@ import { db } from "./db";
 import { mkdir } from "fs/promises";
 
 import { registerOTel } from "./otel-middleware";
+import { registerAccessLogger } from "./access-logger";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -21,6 +22,7 @@ const app = new Elysia()
   .use(staticPlugin({ assets: "public", prefix: "/" }));
 
 registerOTel(app);
+registerAccessLogger(app);
 
 app
   .get("/", () => ({ status: "DevShare API is running", version: "2.0" }))

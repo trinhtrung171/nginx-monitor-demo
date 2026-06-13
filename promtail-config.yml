@@ -22,11 +22,3 @@ scrape_configs:
         regex: '(.{12})'
         replacement: '${1}'
         target_label: 'container_id'
-    pipeline_stages:
-      - json:
-          expressions:
-            level: level
-            message: msg
-      - labels:
-          level:
-          message:

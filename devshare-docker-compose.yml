@@ -16,7 +16,7 @@ services:
 
   devshare-backend:
     build:
-      context: /Users/a123/Documents/GitHub/devshare/reddit_backend
+      context: /Users/a123/Documents/GitHub/nginx-monitor-demo/app/reddit_backend
       dockerfile: Dockerfile
     container_name: devshare-backend
     ports:
