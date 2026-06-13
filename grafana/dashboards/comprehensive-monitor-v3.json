@@ -1852,277 +1852,226 @@
     },
     {
       "id": 2001,
-      "title": "Top 10 IPs",
+      "title": "Bảng 1: Tổng quan IP",
       "type": "table",
       "datasource": {
         "type": "loki",
         "uid": "devshare-loki"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 9,
+        "w": 24,
         "x": 0,
         "y": 57
       },
       "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "expr": "sum by (ip) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [5m]))",
-          "refId": "A",
-          "queryType": "range"
+          "datasource": { "type": "loki", "uid": "devshare-loki" },
+          "editorMode": "code",
+          "expr": "sum by (ip) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [30m]))",
+          "legendFormat": "Requests",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "devshare-loki" },
+          "editorMode": "code",
+          "expr": "avg by (ip) (avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [30m]))",
+          "legendFormat": "Avg Duration",
+          "queryType": "range",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "devshare-loki" },
+          "editorMode": "code",
+          "expr": "sum by (ip) (sum_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap bytes_sent [30m]))",
+          "legendFormat": "Bandwidth",
+          "queryType": "range",
+          "refId": "C"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": "auto",
-            "displayMode": "auto"
-          },
+          "custom": { "align": "auto", "displayMode": "auto" },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
+            "steps": [{ "color": "green", "value": null }]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Avg Duration" },
+            "properties": [
+              { "id": "unit", "value": "ms" },
+              { "id": "decimals", "value": 1 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Bandwidth" },
+            "properties": [
+              { "id": "unit", "value": "bytes" },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Requests" },
+            "properties": [
+              { "id": "unit", "value": "none" },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
       },
-      "options": {
-        "showHeader": true
-      }
+      "options": { "showHeader": true },
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "ip": "IP Address"
+            }
+          }
+        }
+      ]
     },
     {
       "id": 2002,
-      "title": "Băng thông theo IP (Bandwidth per IP)",
-      "type": "timeseries",
+      "title": "Bảng 2: Phương thức HTTP theo IP",
+      "type": "table",
       "datasource": {
         "type": "loki",
         "uid": "devshare-loki"
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
-        "x": 12,
-        "y": 57
+        "x": 0,
+        "y": 66
       },
       "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "expr": "sum by (ip) (sum_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap bytes_sent [5m]))",
-          "refId": "A",
-          "queryType": "range"
+          "datasource": { "type": "loki", "uid": "devshare-loki" },
+          "editorMode": "code",
+          "expr": "sum by (ip, method) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [30m]))",
+          "legendFormat": "{{method}}",
+          "queryType": "range",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "opacity"
+          "custom": { "align": "auto", "displayMode": "auto" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "/^(GET|POST|PUT|DELETE|PATCH)$/" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              { "id": "unit", "value": "none" }
+            ]
           },
-          "color": {
-            "mode": "palette-classic"
+          {
+            "matcher": { "id": "byName", "options": "Total" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              { "id": "unit", "value": "none" }
+            ]
+          }
+        ]
+      },
+      "options": { "showHeader": true },
+      "transformations": [
+        { "id": "labelsToFields", "options": { "mode": "columns" } },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Total",
+            "mode": "reduceRow",
+            "reduce": { "calcs": ["sum"] }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {}
           }
         }
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        }
-      }
+      ]
     },
     {
       "id": 2003,
-      "title": " HTTP Methods",
-      "type": "piechart",
+      "title": "Bảng 3: Trạng thái HTTP theo IP",
+      "type": "table",
       "datasource": {
         "type": "loki",
         "uid": "devshare-loki"
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 65
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 66
       },
       "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "expr": "sum by (method) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [5m]))",
-          "refId": "A",
-          "queryType": "range"
+          "datasource": { "type": "loki", "uid": "devshare-loki" },
+          "editorMode": "code",
+          "expr": "sum by (ip, status) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [30m]))",
+          "legendFormat": "{{status}}",
+          "queryType": "range",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {},
-          "mappings": []
-        }
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "pieType": "pie",
-        "legend": {
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        }
-      }
-    },
-    {
-      "id": 2004,
-      "title": "HTTP Status Codes Over Time",
-      "type": "timeseries",
-      "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 65
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "expr": "sum by (status) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [1m]))",
-          "refId": "A",
-          "queryType": "range"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "opacity"
-          },
-          "color": {
-            "mode": "palette-classic"
-          }
-        }
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        }
-      }
-    },
-    {
-      "id": 2005,
-      "title": "Avg Response Time (Loki)",
-      "type": "stat",
-      "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 65
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "expr": "avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [5m])",
-          "refId": "A",
-          "queryType": "range"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms",
-          "decimals": 1,
+          "custom": { "align": "auto", "displayMode": "auto" },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 500
-              }
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Total" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              { "id": "unit", "value": "none" }
             ]
           }
-        }
+        ]
       },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "textMode": "value"
-      }
-    },
-    {
-      "id": 2006,
-      "title": "User Journey Logs",
-      "type": "logs",
-      "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 73
-      },
-      "targets": [
+      "options": { "showHeader": true },
+      "transformations": [
+        { "id": "labelsToFields", "options": { "mode": "columns" } },
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "expr": "{service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | line_format \"IP: {{.ip}} | User: {{.user_id}} | {{.method}} {{.path}} ({{.status}}) | Duration: {{.duration_ms}}ms | UserAgent: {{.user_agent}}\"",
-          "refId": "A",
-          "queryType": "range"
+          "id": "calculateField",
+          "options": {
+            "alias": "Total",
+            "mode": "reduceRow",
+            "reduce": { "calcs": ["sum"] }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {}
+          }
         }
-      ],
-      "options": {
-        "showLabels": false,
-        "wrapLogMessage": true,
-        "enableLogDetails": true,
-        "showTime": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false
-      }
+      ]
     },
     {
       "collapsed": false,
@@ -2130,7 +2079,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 75
       },
       "id": 3000,
       "panels": [],
@@ -2149,7 +2098,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 82
+        "y": 76
       },
       "targets": [
         {
