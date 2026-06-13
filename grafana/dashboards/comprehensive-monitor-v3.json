@@ -25,7 +25,7 @@
       "id": 1002,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -88,7 +88,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "100 - (avg by(instance)(rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100)",
           "refId": "A"
@@ -101,7 +101,7 @@
       "id": 1003,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -164,7 +164,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "((node_memory_wired_bytes{job=\"node\"} + node_memory_active_bytes{job=\"node\"}) / node_memory_total_bytes{job=\"node\"}) * 100",
           "refId": "A"
@@ -177,7 +177,7 @@
       "id": 1004,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -240,7 +240,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "node_load1",
           "refId": "A"
@@ -253,7 +253,7 @@
       "id": 1005,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -316,7 +316,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "rate(node_disk_read_bytes_total[1m])",
           "refId": "A"
@@ -329,7 +329,7 @@
       "id": 1006,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -392,7 +392,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "rate(node_disk_written_bytes_total[1m])",
           "refId": "A"
@@ -405,7 +405,7 @@
       "id": 1007,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -468,7 +468,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "node_time_seconds - node_boot_time_seconds",
           "refId": "A"
@@ -481,7 +481,7 @@
       "id": 1008,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -541,7 +541,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "100 - (avg by(instance)(rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100)",
           "refId": "A"
@@ -554,7 +554,7 @@
       "id": 1009,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -614,7 +614,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "((node_memory_wired_bytes{job=\"node\"} + node_memory_active_bytes{job=\"node\"}) / node_memory_total_bytes{job=\"node\"}) * 100",
           "refId": "A"
@@ -627,7 +627,7 @@
       "id": 1010,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -687,7 +687,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "rate(node_disk_read_bytes_total[1m])",
           "refId": "A"
@@ -695,7 +695,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "rate(node_disk_written_bytes_total[1m])",
           "refId": "B"
@@ -708,7 +708,7 @@
       "id": 1011,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -768,7 +768,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[1m]) * 8",
           "refId": "A"
@@ -776,7 +776,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[1m]) * 8",
           "refId": "B"
@@ -789,7 +789,7 @@
       "id": 1012,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -849,7 +849,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "node_load1",
           "refId": "A"
@@ -857,7 +857,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "node_load5",
           "refId": "B"
@@ -865,7 +865,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "node_load15",
           "refId": "C"
@@ -891,7 +891,7 @@
       "id": 1014,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -954,7 +954,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "sum(rate(http_server_requests_total[1m]))",
           "refId": "A"
@@ -967,7 +967,7 @@
       "id": 1015,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1030,7 +1030,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "(sum(rate(http_server_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_total[5m]))) * 100 or vector(0)",
           "refId": "A"
@@ -1043,7 +1043,7 @@
       "id": 1016,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1106,7 +1106,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket[5m])) by (le))",
           "refId": "A"
@@ -1119,7 +1119,7 @@
       "id": 1017,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1182,7 +1182,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "go_goroutines{job=\"nginx\"}",
           "refId": "A"
@@ -1195,7 +1195,7 @@
       "id": 1018,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1258,7 +1258,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "go_memstats_heap_alloc_bytes{job=\"nginx\"}",
           "refId": "A"
@@ -1271,7 +1271,7 @@
       "id": 1019,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1334,7 +1334,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "process_cpu_usage * 100",
           "refId": "A"
@@ -1347,7 +1347,7 @@
       "id": 1020,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1407,7 +1407,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "sum(rate(http_server_requests_total[5m])) by (method)",
           "refId": "A"
@@ -1420,7 +1420,7 @@
       "id": 1021,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1480,7 +1480,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "sum(rate(http_server_requests_total{status=~\"2..\"}[5m]))",
           "refId": "A"
@@ -1488,7 +1488,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "sum(rate(http_server_requests_total{status=~\"4..\"}[5m]))",
           "refId": "B"
@@ -1496,7 +1496,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "sum(rate(http_server_requests_total{status=~\"5..\"}[5m]))",
           "refId": "C"
@@ -1509,7 +1509,7 @@
       "id": 1022,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1569,7 +1569,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "histogram_quantile(0.50, sum(rate(http_server_duration_milliseconds_bucket[5m])) by (le))",
           "refId": "A"
@@ -1577,7 +1577,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "histogram_quantile(0.90, sum(rate(http_server_duration_milliseconds_bucket[5m])) by (le))",
           "refId": "B"
@@ -1585,7 +1585,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket[5m])) by (le))",
           "refId": "C"
@@ -1593,7 +1593,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "histogram_quantile(0.99, sum(rate(http_server_duration_milliseconds_bucket[5m])) by (le))",
           "refId": "D"
@@ -1606,7 +1606,7 @@
       "id": 1023,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1666,7 +1666,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "go_goroutines{job=\"nginx\"}",
           "refId": "A"
@@ -1674,7 +1674,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "go_memstats_heap_alloc_bytes{job=\"nginx\"}",
           "refId": "B"
@@ -1682,7 +1682,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "go_memstats_heap_sys_bytes{job=\"nginx\"}",
           "refId": "C"
@@ -1695,7 +1695,7 @@
       "id": 1024,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1755,7 +1755,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "process_cpu_usage * 100",
           "refId": "A"
@@ -1768,7 +1768,7 @@
       "id": 1025,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -1828,7 +1828,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "process_memory_usage_bytes",
           "refId": "A"
@@ -1870,7 +1870,7 @@
             "type": "loki",
             "uid": "devshare-loki"
           },
-          "expr": "sum by (ip) (count_over_time({service=\"devshare-backend\"} | json [5m]))",
+          "expr": "sum by (ip) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [5m]))",
           "refId": "A",
           "queryType": "range"
         }
@@ -1918,7 +1918,7 @@
             "type": "loki",
             "uid": "devshare-loki"
           },
-          "expr": "sum by (ip) (sum_over_time({service=\"devshare-backend\"} | json | unwrap bytes_sent [5m]))",
+          "expr": "sum by (ip) (sum_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap bytes_sent [5m]))",
           "refId": "A",
           "queryType": "range"
         }
@@ -1966,7 +1966,7 @@
             "type": "loki",
             "uid": "devshare-loki"
           },
-          "expr": "sum by (method) (count_over_time({service=\"devshare-backend\"} | json [5m]))",
+          "expr": "sum by (method) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [5m]))",
           "refId": "A",
           "queryType": "range"
         }
@@ -2012,7 +2012,7 @@
             "type": "loki",
             "uid": "devshare-loki"
           },
-          "expr": "sum by (status) (count_over_time({service=\"devshare-backend\"} | json [1m]))",
+          "expr": "sum by (status) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [1m]))",
           "refId": "A",
           "queryType": "range"
         }
@@ -2059,7 +2059,7 @@
             "type": "loki",
             "uid": "devshare-loki"
           },
-          "expr": "avg_over_time({service=\"devshare-backend\"} | json | unwrap duration_ms [5m])",
+          "expr": "avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [5m])",
           "refId": "A",
           "queryType": "range"
         }
@@ -2110,7 +2110,7 @@
             "type": "loki",
             "uid": "devshare-loki"
           },
-          "expr": "{service=\"devshare-backend\"} | json | line_format \"IP: {{.ip}} | User: {{.user_id}} | {{.method}} {{.path}} ({{.status}}) | Duration: {{.duration_ms}}ms | UserAgent: {{.user_agent}}\"",
+          "expr": "{service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | line_format \"IP: {{.ip}} | User: {{.user_id}} | {{.method}} {{.path}} ({{.status}}) | Duration: {{.duration_ms}}ms | UserAgent: {{.user_agent}}\"",
           "refId": "A",
           "queryType": "range"
         }
@@ -2157,7 +2157,7 @@
             "type": "loki",
             "uid": "devshare-loki"
           },
-          "expr": "sum(count_over_time({service=\"devshare-backend\"} | json | type=\"slow_query\" [5m])) or vector(0)",
+          "expr": "sum(count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [5m])) or vector(0)",
           "refId": "A",
           "queryType": "range"
         }
@@ -2208,7 +2208,7 @@
             "type": "loki",
             "uid": "devshare-loki"
           },
-          "expr": "{service=\"devshare-backend\"} | json | type=\"slow_query\" | line_format \"Slow query duration: {{.duration_ms}}ms | Query: {{.query}} | Params: {{.params}}\"",
+          "expr": "{service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | line_format \"{{.method}} {{.path}} ({{.status}}) | IP: {{.ip}} | {{.duration_ms}}ms\"",
           "refId": "A",
           "queryType": "range"
         }
@@ -2239,7 +2239,7 @@
       "id": 1043,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -2302,7 +2302,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_success{instance=\"https://devshare-eta.vercel.app/\"}",
           "refId": "A"
@@ -2315,7 +2315,7 @@
       "id": 1044,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -2378,7 +2378,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_success{instance=\"https://nginx-monitor-demo.onrender.com/\"}",
           "refId": "A"
@@ -2391,7 +2391,7 @@
       "id": 1045,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -2454,7 +2454,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "avg_over_time(probe_success{instance=\"https://devshare-eta.vercel.app/\"}[24h]) * 100",
           "refId": "A"
@@ -2467,7 +2467,7 @@
       "id": 1046,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -2530,7 +2530,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "avg_over_time(probe_success{instance=\"https://nginx-monitor-demo.onrender.com/\"}[24h]) * 100",
           "refId": "A"
@@ -2543,7 +2543,7 @@
       "id": 1047,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -2606,7 +2606,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_duration_seconds{instance=\"https://devshare-eta.vercel.app/\"}",
           "refId": "A"
@@ -2619,7 +2619,7 @@
       "id": 1048,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -2682,7 +2682,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_duration_seconds{instance=\"https://nginx-monitor-demo.onrender.com/\"}",
           "refId": "A"
@@ -2695,7 +2695,7 @@
       "id": 1049,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -2755,7 +2755,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_duration_seconds{instance=\"https://devshare-eta.vercel.app/\"}",
           "refId": "A"
@@ -2763,7 +2763,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_duration_seconds{instance=\"https://nginx-monitor-demo.onrender.com/\"}",
           "refId": "B"
@@ -2776,7 +2776,7 @@
       "id": 1050,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus-local"
       },
       "fieldConfig": {
         "defaults": {
@@ -2836,7 +2836,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_http_duration_seconds{instance=\"https://nginx-monitor-demo.onrender.com/\",phase=\"connect\"}",
           "refId": "A"
@@ -2844,7 +2844,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_http_duration_seconds{instance=\"https://nginx-monitor-demo.onrender.com/\",phase=\"tls\"}",
           "refId": "B"
@@ -2852,7 +2852,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_http_duration_seconds{instance=\"https://nginx-monitor-demo.onrender.com/\",phase=\"processing\"}",
           "refId": "C"
@@ -2860,7 +2860,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus-local"
           },
           "expr": "probe_http_duration_seconds{instance=\"https://nginx-monitor-demo.onrender.com/\",phase=\"transfer\"}",
           "refId": "D"
