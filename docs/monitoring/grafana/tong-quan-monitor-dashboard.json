@@ -2441,7 +2441,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "expr": "(node_memory_active_bytes / node_memory_total_bytes) * 100",
           "legendFormat": "RAM",
           "range": true,
           "refId": "A"
@@ -2790,7 +2790,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "expr": "(node_memory_active_bytes / node_memory_total_bytes) * 100",
           "legendFormat": "RAM {{instance}}",
           "range": true,
           "refId": "A"
