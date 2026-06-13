@@ -3,6 +3,7 @@
   "uid": "application-dashboard",
   "schemaVersion": 39,
   "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
   "panels": [
     {
       "id": 1,
@@ -11,13 +12,14 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_requests_total[1m]))",
+          "expr": "sum(rate(http_server_requests_total[$__rate_interval])) * 60",
           "legendFormat": "RPM"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "rpm"
+          "unit": "rpm",
+          "noValue": "0"
         }
       },
       "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 }
@@ -32,6 +34,7 @@
           "unit": "percent",
           "min": 0,
           "max": 100,
+          "noValue": "0",
           "thresholds": {
             "steps": [
               { "color": "green", "value": null },
@@ -43,7 +46,7 @@
       },
       "targets": [
         {
-          "expr": "rate(http_server_requests_total{status=~\"5..\"}[5m]) / rate(http_server_requests_total[5m]) * 100",
+          "expr": "(sum(rate(http_server_requests_total{status=~\"5..\"}[$__rate_interval])) / sum(rate(http_server_requests_total[$__rate_interval])) * 100) or vector(0)",
           "legendFormat": "5xx%"
         }
       ],
@@ -56,13 +59,14 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(http_server_duration_milliseconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(http_server_duration_milliseconds_bucket[$__rate_interval])))",
           "legendFormat": "p95"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
+          "noValue": "0",
           "thresholds": {
             "steps": [
               { "color": "green", "value": null },
@@ -81,7 +85,7 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "process_cpu_usage",
+          "expr": "avg(process_cpu_usage)",
           "legendFormat": "CPU"
         }
       ],
@@ -90,6 +94,7 @@
           "unit": "percentunit",
           "min": 0,
           "max": 1,
+          "noValue": "0",
           "thresholds": {
             "steps": [
               { "color": "green", "value": null },
@@ -108,13 +113,14 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "process_memory_usage_bytes",
+          "expr": "avg(process_memory_usage_bytes)",
           "legendFormat": "RSS"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "noValue": "0",
           "thresholds": {
             "steps": [
               { "color": "green", "value": null },
@@ -133,13 +139,14 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "sum(increase(app_errors_total[5m]))",
+          "expr": "(sum(increase(app_errors_total[$__range])) or vector(0))",
           "legendFormat": "Errors"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "noValue": "0"
         }
       },
       "gridPos": { "h": 8, "w": 6, "x": 6, "y": 8 }
@@ -158,6 +165,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bool",
+          "noValue": "0",
           "thresholds": {
             "steps": [
               { "color": "red", "value": null },
