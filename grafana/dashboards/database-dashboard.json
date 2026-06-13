@@ -1,0 +1,133 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Database slow query monitoring from Loki: slow query count (>200ms), live slow query log stream",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3000,
+      "panels": [],
+      "title": "4. Truy V\u1ea5n C\u01a1 S\u1edf D\u1eef Li\u1ec7u (Database Queries)",
+      "type": "row"
+    },
+    {
+      "id": 3001,
+      "title": "Slow Query Count (>200ms)",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "sum(count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [5m])) or vector(0)",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 3002,
+      "title": "Live Slow Query Log",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "devshare-loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 1
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "devshare-loki"
+          },
+          "expr": "{service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | line_format \"{{.method}} {{.path}} ({{.status}}) | IP: {{.ip}} | {{.duration_ms}}ms\"",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "showTime": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false
+      }
+    }
+  ],
+  "preload": false,
+  "refresh": "15s",
+  "schemaVersion": 42,
+  "tags": [
+    "database",
+    "loki",
+    "logs",
+    "slow-queries",
+    "monitoring"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Database Queries",
+  "uid": "database-queries-monitor",
+  "version": 1,
+  "weekStart": ""
+}
