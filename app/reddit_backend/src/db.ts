@@ -7,6 +7,7 @@ const meter = metrics.getMeter('app-db');
 const slowQueryCounter = meter.createCounter('slow_query_total', {
   description: 'Total number of slow queries (>200ms)',
 });
+slowQueryCounter.add(0);
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

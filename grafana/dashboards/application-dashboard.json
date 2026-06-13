@@ -8,33 +8,41 @@
     {
       "id": 1,
       "title": "Request/min",
-      "type": "stat",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_requests_total[$__rate_interval])) * 60",
+          "expr": "(sum(increase(http_server_requests_total[$__range])) * 60 / $__range_s) or vector(0)",
           "legendFormat": "RPM"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "rpm",
-          "noValue": "0"
+          "color": { "mode": "fixed" },
+          "custom": { "lineWidth": 2, "fillOpacity": 20 }
         }
       },
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 }
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
     },
     {
       "id": 2,
       "title": "Error Rate %",
-      "type": "gauge",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
+      "targets": [
+        {
+          "expr": "(sum(increase(http_server_requests_total{status=~\"5..\"}[$__range])) / sum(increase(http_server_requests_total[$__range])) * 100) or vector(0)",
+          "legendFormat": "5xx%"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
           "min": 0,
           "max": 100,
-          "noValue": "0",
+          "color": { "mode": "fixed" },
+          "custom": { "lineWidth": 2, "fillOpacity": 20 },
           "thresholds": {
             "steps": [
               { "color": "green", "value": null },
@@ -44,29 +52,24 @@
           }
         }
       },
-      "targets": [
-        {
-          "expr": "(sum(rate(http_server_requests_total{status=~\"5..\"}[$__rate_interval])) / sum(rate(http_server_requests_total[$__rate_interval])) * 100) or vector(0)",
-          "legendFormat": "5xx%"
-        }
-      ],
-      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 }
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
     },
     {
       "id": 3,
       "title": "p95 Latency",
-      "type": "stat",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(http_server_duration_milliseconds_bucket[$__rate_interval])))",
+          "expr": "(histogram_quantile(0.95, sum by(le) (increase(http_server_duration_milliseconds_bucket[$__range]))) or vector(0))",
           "legendFormat": "p95"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
-          "noValue": "0",
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 20 },
           "thresholds": {
             "steps": [
               { "color": "green", "value": null },
@@ -76,40 +79,34 @@
           }
         }
       },
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 }
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 }
     },
     {
       "id": 4,
       "title": "Process CPU",
-      "type": "gauge",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "avg(process_cpu_usage)",
-          "legendFormat": "CPU"
+          "expr": "avg(process_cpu_usage) * 100",
+          "legendFormat": "CPU %"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
+          "unit": "percent",
           "min": 0,
-          "max": 1,
-          "noValue": "0",
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 0.5 },
-              { "color": "red", "value": 0.8 }
-            ]
-          }
+          "max": 100,
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 30 }
         }
       },
-      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 }
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 }
     },
     {
       "id": 5,
       "title": "Process RAM",
-      "type": "gauge",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
@@ -120,22 +117,16 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
-          "noValue": "0",
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 104857600 },
-              { "color": "red", "value": 209715200 }
-            ]
-          }
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 30 }
         }
       },
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 8 }
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 }
     },
     {
       "id": 6,
       "title": "Error Count",
-      "type": "stat",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
@@ -146,10 +137,11 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "noValue": "0"
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 30 }
         }
       },
-      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 8 }
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 }
     },
     {
       "id": 7,
@@ -158,7 +150,7 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "probe_success{job=\"blackbox\", instance=\"https://nginx-monitor-demo.onrender.com/\"}",
+          "expr": "avg(probe_success{job=\"blackbox\", instance=\"https://nginx-monitor-demo.onrender.com/\"})",
           "legendFormat": "Uptime"
         }
       ],
@@ -166,6 +158,7 @@
         "defaults": {
           "unit": "bool",
           "noValue": "0",
+          "color": { "mode": "thresholds" },
           "thresholds": {
             "steps": [
               { "color": "red", "value": null },
@@ -174,7 +167,7 @@
           }
         }
       },
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 }
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 16 }
     }
   ]
 }

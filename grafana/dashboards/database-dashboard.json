@@ -11,7 +11,7 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "sum(increase(slow_query_total[5m]))",
+          "expr": "(sum(increase(slow_query_total[$__range])) or vector(0))",
           "legendFormat": "Slow queries"
         }
       ],
