@@ -1,0 +1,203 @@
+{
+  "annotations": { "list": [ { "builtIn": 1, "datasource": { "type": "grafana", "uid": "-- Grafana --" }, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" } ] },
+  "description": "Runtime metrics for application processes: Go (nginx-exporter) & Bun (OTel). Includes goroutines, heap, GC, threads, process CPU, and memory.",
+  "editable": true, "fiscalYearStartMonth": 0, "graphTooltip": 1,
+  "panels": [
+    {
+      "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 1, "panels": [], "title": "Process CPU & Memory", "type": "row"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "max": 100, "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 70 }, { "color": "red", "value": 90 } ] },
+          "unit": "percent"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 1 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "value" },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "process_cpu_usage * 100", "legendFormat": "CPU", "refId": "A" } ],
+      "title": "App CPU Usage (OTel/Bun)", "type": "stat"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 209715200 }, { "color": "red", "value": 524288000 } ] },
+          "unit": "bytes"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 1 },
+      "id": 3,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "value" },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "process_memory_usage_bytes", "legendFormat": "RAM", "refId": "A" } ],
+      "title": "App Memory RSS (OTel/Bun)", "type": "stat"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 100 }, { "color": "red", "value": 500 } ] },
+          "unit": "short"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 1 },
+      "id": 4,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "value" },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "go_goroutines{job=\"nginx\"}", "legendFormat": "Goroutines", "refId": "A" } ],
+      "title": "Goroutines (nginx-exporter)", "type": "stat"
+    },
+    {
+      "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }, "id": 5, "panels": [], "title": "Go Runtime (nginx-exporter)", "type": "row"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "Count", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 15, "gradientMode": "opacity", "lineInterpolation": "smooth", "lineWidth": 2,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [], "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "short"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 6 },
+      "id": 6,
+      "options": { "legend": { "calcs": [ "mean", "max" ], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "go_goroutines{job=\"nginx\"}", "legendFormat": "goroutines", "refId": "A" },
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "go_threads{job=\"nginx\"}", "legendFormat": "threads", "refId": "B" }
+      ],
+      "title": "Goroutines & OS Threads", "type": "timeseries"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "Bytes", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 15, "gradientMode": "opacity", "lineInterpolation": "smooth", "lineWidth": 2,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [], "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "bytes"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 6 },
+      "id": 7,
+      "options": { "legend": { "calcs": [ "mean", "max" ], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "go_memstats_heap_alloc_bytes{job=\"nginx\"}", "legendFormat": "heap_alloc", "refId": "A" },
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "go_memstats_heap_sys_bytes{job=\"nginx\"}", "legendFormat": "heap_sys", "refId": "B" },
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "go_memstats_stack_inuse_bytes{job=\"nginx\"}", "legendFormat": "stack_inuse", "refId": "C" }
+      ],
+      "title": "Heap Allocation (Go)", "type": "timeseries"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "ms", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 15, "gradientMode": "opacity", "lineInterpolation": "smooth", "lineWidth": 2,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [], "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "ms"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 6 },
+      "id": 8,
+      "options": { "legend": { "calcs": [ "mean", "max" ], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "rate(go_gc_duration_seconds_sum{job=\"nginx\"}[5m]) / rate(go_gc_duration_seconds_count{job=\"nginx\"}[5m]) * 1000", "legendFormat": "avg GC duration", "refId": "A" },
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "go_gc_duration_seconds{job=\"nginx\",quantile=\"0.5\"}", "legendFormat": "GC p50", "refId": "B" },
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "go_gc_duration_seconds{job=\"nginx\",quantile=\"0.95\"}", "legendFormat": "GC p95", "refId": "C" }
+      ],
+      "title": "GC Duration (Go)", "type": "timeseries"
+    },
+    {
+      "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 }, "id": 9, "panels": [], "title": "Process Resources (OTel/Bun)", "type": "row"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "%", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 15, "gradientMode": "opacity", "lineInterpolation": "smooth", "lineWidth": 2,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "line+area" }
+          },
+          "mappings": [], "max": 100, "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 70 }, { "color": "red", "value": 90 } ] },
+          "unit": "percent"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "id": 10,
+      "options": { "legend": { "calcs": [ "mean", "max" ], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "process_cpu_usage * 100", "legendFormat": "CPU %", "refId": "A" } ],
+      "title": "App CPU Usage Trend", "type": "timeseries"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "Bytes", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 15, "gradientMode": "opacity", "lineInterpolation": "smooth", "lineWidth": 2,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [], "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "bytes"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "id": 11,
+      "options": { "legend": { "calcs": [ "mean", "max" ], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "process_memory_usage_bytes", "legendFormat": "RSS", "refId": "A" } ],
+      "title": "App Memory Usage Trend (RSS)", "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 42,
+  "tags": ["runtime", "go", "bun", "process", "opentelemetry"],
+  "templating": {
+    "list": [
+      { "current": { "text": "default", "value": "default" }, "hide": 0, "includeAll": false, "label": "Datasource", "multi": false, "name": "DS_PROMETHEUS", "options": [], "query": "prometheus", "refresh": 1, "regex": "", "type": "datasource" }
+    ]
+  },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Application Runtime",
+  "uid": "app-runtime-monitor",
+  "version": 1,
+  "weekStart": ""
+}

@@ -1,0 +1,230 @@
+{
+  "annotations": { "list": [ { "builtIn": 1, "datasource": { "type": "grafana", "uid": "-- Grafana --" }, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" } ] },
+  "description": "External endpoint monitoring via Blackbox exporter: uptime, response time, phase breakdown, and SSL certificate expiry.",
+  "editable": true, "fiscalYearStartMonth": 0, "graphTooltip": 1,
+  "panels": [
+    {
+      "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 101, "panels": [], "title": "Endpoint Status", "type": "row"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [ { "options": { "0": { "color": "red", "text": "Down" }, "1": { "color": "green", "text": "Up" } }, "type": "value" } ],
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": 0 }, { "color": "green", "value": 1 } ] }
+        }, "overrides": []
+      },
+      "gridPos": { "h": 3, "w": 4, "x": 0, "y": 1 },
+      "id": 2,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "auto" },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_success{job=\"blackbox\"}", "refId": "A" } ],
+      "title": "Probe Status", "type": "stat"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": 0 }, { "color": "green", "value": 200 }, { "color": "red", "value": 400 } ] }
+        }, "overrides": []
+      },
+      "gridPos": { "h": 3, "w": 4, "x": 4, "y": 1 },
+      "id": 3,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "auto" },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_http_status_code{job=\"blackbox\"}", "refId": "A" } ],
+      "title": "HTTP Status", "type": "stat"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [], "unit": "s",
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 0.5 }, { "color": "red", "value": 1 } ] }
+        }, "overrides": []
+      },
+      "gridPos": { "h": 3, "w": 4, "x": 8, "y": 1 },
+      "id": 4,
+      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "auto" },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_duration_seconds{job=\"blackbox\"}", "refId": "A" } ],
+      "title": "Response Time", "type": "stat"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [], "unit": "percent",
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": 0 }, { "color": "orange", "value": 99 }, { "color": "green", "value": 99.9 } ] }
+        }, "overrides": []
+      },
+      "gridPos": { "h": 3, "w": 4, "x": 12, "y": 1 },
+      "id": 5,
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": [ "mean" ], "fields": "", "values": false }, "textMode": "auto" },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "avg_over_time(probe_success{job=\"blackbox\"}[24h]) * 100", "refId": "A" } ],
+      "title": "Uptime (24h)", "type": "stat"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [], "unit": "d",
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 30 }, { "color": "red", "value": 7 } ] }
+        }, "overrides": []
+      },
+      "gridPos": { "h": 3, "w": 8, "x": 16, "y": 1 },
+      "id": 6,
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "auto" },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox\"} - time()) / 86400", "refId": "A" } ],
+      "title": "SSL Days Remaining", "type": "stat"
+    },
+    {
+      "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 4 }, "id": 107, "panels": [], "title": "Response Time & Phases", "type": "row"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "Response Time (ms)", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "lineInterpolation": "linear", "lineWidth": 1.5,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "s"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "id": 13,
+      "options": { "legend": { "calcs": [ "mean", "max", "min" ], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_duration_seconds{job=\"blackbox\"}", "legendFormat": "Total Response Time", "refId": "A" } ],
+      "title": "Response Time Trend", "type": "timeseries"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "lineInterpolation": "linear", "lineWidth": 1,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" }, "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [], "unit": "s"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "id": 12,
+      "options": { "legend": { "calcs": [ "mean", "max", "min" ], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_http_duration_seconds{job=\"blackbox\",phase=\"connect\"}", "legendFormat": "Connect", "refId": "A" },
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_http_duration_seconds{job=\"blackbox\",phase=\"tls\"}", "legendFormat": "TLS", "refId": "B" },
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_http_duration_seconds{job=\"blackbox\",phase=\"processing\"}", "legendFormat": "Processing", "refId": "C" },
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_http_duration_seconds{job=\"blackbox\",phase=\"transfer\"}", "legendFormat": "Transfer", "refId": "D" }
+      ],
+      "title": "Phase Breakdown", "type": "timeseries"
+    },
+    {
+      "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 }, "id": 102, "panels": [], "title": "Probe Success & SSL", "type": "row"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 0, "gradientMode": "none", "lineInterpolation": "linear", "lineWidth": 1.5,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [], "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] }
+        }, "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 14 },
+      "id": 6,
+      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_success{job=\"blackbox\"}", "legendFormat": "Probe Success", "refId": "A" } ],
+      "title": "Probe Success Timeline", "type": "timeseries"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "lineInterpolation": "linear", "lineWidth": 2,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "line+area" }
+          },
+          "mappings": [], "unit": "d",
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 30 }, { "color": "red", "value": 7 } ] }
+        }, "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 14 },
+      "id": 8,
+      "options": { "legend": { "calcs": [ "mean", "min" ], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox\"} - time()) / 86400", "legendFormat": "SSL Days Remaining", "refId": "A" } ],
+      "title": "SSL Certificate Expiry Timeline", "type": "timeseries"
+    },
+    {
+      "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 }, "id": 103, "panels": [], "title": "DNS & SSL Details", "type": "row"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisPlacement": "auto",
+            "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "lineInterpolation": "linear", "lineWidth": 1.5,
+            "pointSize": 3, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [], "unit": "s"
+        }, "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 21 },
+      "id": 9,
+      "options": { "legend": { "calcs": [ "mean", "max" ], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [ { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_dns_lookup_time_seconds{job=\"blackbox\"}", "legendFormat": "DNS Lookup", "refId": "A" } ],
+      "title": "DNS Lookup Time", "type": "timeseries"
+    },
+    {
+      "datasource": { "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [], "unit": "s",
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 30 } ] }
+        }, "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 21 },
+      "id": 15,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "auto" },
+      "targets": [
+        { "datasource": { "uid": "${DS_PROMETHEUS}" }, "expr": "probe_ssl_earliest_cert_expiry{job=\"blackbox\"}", "format": "date_seconds", "legendFormat": "SSL Expiry", "refId": "A" }
+      ],
+      "title": "SSL Certificate Expiry Date", "type": "stat"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 42,
+  "tags": ["blackbox", "external", "ssl", "uptime"],
+  "templating": {
+    "list": [
+      { "current": { "text": "default", "value": "default" }, "hide": 0, "includeAll": false, "label": "Datasource", "multi": false, "name": "DS_PROMETHEUS", "options": [], "query": "prometheus", "queryValue": "", "refresh": 1, "regex": "", "type": "datasource" },
+      { "current": { "text": [ "All" ], "value": [ "$__all" ] }, "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "definition": "label_values(probe_success, instance)", "hide": 0, "includeAll": true, "multi": true, "name": "instance", "options": [], "query": { "query": "label_values(probe_success, instance)", "refId": "StandardVariableQuery" }, "refresh": 1, "regex": "", "sort": 0, "type": "query" }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "External Probe",
+  "uid": "external-probe-monitor",
+  "version": 1,
+  "weekStart": ""
+}

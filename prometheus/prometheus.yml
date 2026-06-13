@@ -53,7 +53,8 @@ scrape_configs:
     params:
       module: [http_2xx]
     static_configs:
-      - targets: ['https://devshare-eta.vercel.app/']  # DevShare app URL
+      - targets: ['https://devshare-eta.vercel.app/']  # DevShare frontend (Vercel)
+      - targets: ['https://nginx-monitor-demo.onrender.com/']  # DevShare backend (Render)
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

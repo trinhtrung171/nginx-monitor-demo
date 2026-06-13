@@ -35,6 +35,20 @@ services:
       - devshare-db
     restart: unless-stopped
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: devshare_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    networks:
+      - global-monitor-net
+    depends_on:
+      - devshare-db
+
 volumes:
   devshare_postgres_data:
   devshare_uploads:
