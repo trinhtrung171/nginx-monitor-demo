@@ -12,7 +12,7 @@ import { accessLogRoutes } from "./routes/accessLogs";
 import { db } from "./db";
 import { mkdir } from "fs/promises";
 
-import { registerOTel } from "./otel-middleware";
+import { registerOTel, errorCounter } from "./otel-middleware";
 import { registerAccessLogger } from "./access-logger";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -23,6 +23,16 @@ const app = new Elysia()
 
 registerOTel(app);
 registerAccessLogger(app);
+
+app.onError(({ error, request, set }) => {
+  const status = set.status || 500;
+  if (status >= 500) {
+    errorCounter.add(1, {
+      method: request.method,
+      path: new URL(request.url).pathname,
+    });
+  }
+});
 
 app
   .get("/", () => ({ status: "DevShare API is running", version: "2.0" }))

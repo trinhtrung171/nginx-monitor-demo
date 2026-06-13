@@ -70,6 +70,7 @@ scrape_configs:
 
 rule_files:
   - "alert_rules.yml"
+  - "app_rules.yml"
   - "blackbox_rules.yml"
   - "ssl_rules.yml"
 

@@ -28,7 +28,7 @@ services:
       PUBLIC_URL: "http://localhost:3001"
       PORT: "3001"
     volumes:
-      - devshare_uploads:/app/public/uploads
+      - ./app/reddit_backend/public/uploads:/app/public/uploads
     networks:
       - global-monitor-net
     depends_on:
@@ -51,7 +51,6 @@ services:
 
 volumes:
   devshare_postgres_data:
-  devshare_uploads:
 
 networks:
   global-monitor-net:

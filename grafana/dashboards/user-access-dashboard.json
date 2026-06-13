@@ -1,391 +1,69 @@
 {
-  "annotations": {
-    "list": []
-  },
-  "description": "User access logs from Loki: IP-based activity overview, HTTP methods by IP, HTTP status by IP with per-IP metrics",
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "links": [],
+  "title": "User Access Logs",
+  "uid": "user-access-dashboard",
+  "schemaVersion": 39,
+  "version": 1,
   "panels": [
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 2000,
-      "panels": [],
-      "title": "3. Nh\u1eadt K\u00fd Truy C\u1eadp Ng\u01b0\u1eddi D\u00f9ng (User Access)",
-      "type": "row"
-    },
-    {
-      "id": 2001,
-      "title": "B\u1ea3ng 1: T\u1ed5ng quan IP",
+      "id": 1,
+      "title": "Top 10 IPs",
       "type": "table",
-      "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 24,
-        "x": 0,
-        "y": 1
-      },
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "editorMode": "code",
-          "expr": "sum by (ip) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [30m]))",
-          "legendFormat": "Requests",
-          "queryType": "range",
-          "refId": "A"
-        },
+          "expr": "sum by(ip) (count_over_time({service=\"devshare-backend\"} | json [1h]))",
+          "legendFormat": "",
+          "queryType": "range"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "title": "Requests by Endpoint",
+      "type": "barchart",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "editorMode": "code",
-          "expr": "avg by (ip) (avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [30m]))",
-          "legendFormat": "Avg Duration",
-          "queryType": "range",
-          "refId": "B"
-        },
+          "expr": "sum by(path) (count_over_time({service=\"devshare-backend\"} | json [1h]))",
+          "legendFormat": "",
+          "queryType": "range"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "id": 3,
+      "title": "HTTP Status Breakdown",
+      "type": "piechart",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "editorMode": "code",
-          "expr": "sum by (ip) (sum_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap bytes_sent [30m]))",
-          "legendFormat": "Bandwidth",
-          "queryType": "range",
-          "refId": "C"
+          "expr": "sum by(status) (count_over_time({service=\"devshare-backend\"} | json [1h]))",
+          "legendFormat": "",
+          "queryType": "range"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "id": 4,
+      "title": "Avg Response Time by Route",
+      "type": "stat",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "sum by(path) (avg_over_time({service=\"devshare-backend\"} | json | unwrap duration_ms [1h]))",
+          "legendFormat": "",
+          "queryType": "range"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": "auto",
-            "displayMode": "auto"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Avg Duration"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "ms"
-              },
-              {
-                "id": "decimals",
-                "value": 1
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Bandwidth"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              },
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Requests"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "none"
-              },
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "showHeader": true
-      },
-      "transformations": [
-        {
-          "id": "merge",
-          "options": {}
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {},
-            "indexByName": {},
-            "renameByName": {
-              "ip": "IP Address"
-            }
-          }
+          "unit": "ms"
         }
-      ]
-    },
-    {
-      "id": 2002,
-      "title": "B\u1ea3ng 2: Ph\u01b0\u01a1ng th\u1ee9c HTTP theo IP",
-      "type": "table",
-      "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
       },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 10
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "editorMode": "code",
-          "expr": "sum by (ip, method) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [30m]))",
-          "legendFormat": "{{method}}",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "displayMode": "auto"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/^(GET|POST|PUT|DELETE|PATCH)$/"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              },
-              {
-                "id": "unit",
-                "value": "none"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Total"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              },
-              {
-                "id": "unit",
-                "value": "none"
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "showHeader": true
-      },
-      "transformations": [
-        {
-          "id": "labelsToFields",
-          "options": {
-            "mode": "columns"
-          }
-        },
-        {
-          "id": "calculateField",
-          "options": {
-            "alias": "Total",
-            "mode": "reduceRow",
-            "reduce": {
-              "calcs": [
-                "sum"
-              ]
-            }
-          }
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {},
-            "indexByName": {},
-            "renameByName": {}
-          }
-        }
-      ]
-    },
-    {
-      "id": 2003,
-      "title": "B\u1ea3ng 3: Tr\u1ea1ng th\u00e1i HTTP theo IP",
-      "type": "table",
-      "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 10
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "devshare-loki"
-          },
-          "editorMode": "code",
-          "expr": "sum by (ip, status) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [30m]))",
-          "legendFormat": "{{status}}",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "displayMode": "auto"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Total"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              },
-              {
-                "id": "unit",
-                "value": "none"
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "showHeader": true
-      },
-      "transformations": [
-        {
-          "id": "labelsToFields",
-          "options": {
-            "mode": "columns"
-          }
-        },
-        {
-          "id": "calculateField",
-          "options": {
-            "alias": "Total",
-            "mode": "reduceRow",
-            "reduce": {
-              "calcs": [
-                "sum"
-              ]
-            }
-          }
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {},
-            "indexByName": {},
-            "renameByName": {}
-          }
-        }
-      ]
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
     }
-  ],
-  "preload": false,
-  "refresh": "15s",
-  "schemaVersion": 42,
-  "tags": [
-    "user-access",
-    "loki",
-    "logs",
-    "ip",
-    "monitoring"
-  ],
-  "templating": {
-    "list": []
-  },
-  "time": {
-    "from": "now-30m",
-    "to": "now"
-  },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "User Access Logs",
-  "uid": "user-access-logs-monitor",
-  "version": 1,
-  "weekStart": ""
+  ]
 }

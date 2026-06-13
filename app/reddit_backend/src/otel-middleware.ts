@@ -15,6 +15,10 @@ export const appAccessCounter = meter.createCounter('app_access_total', {
   description: 'Total number of app accesses (opens)',
 });
 
+export const errorCounter = meter.createCounter('app_errors_total', {
+  description: 'Total number of unhandled errors',
+});
+
 // Đo đạc CPU & RAM tùy chỉnh cho Bun (Tránh crash lỗi node:v8 getHeapSpaceStatistics trên Bun)
 const cpuGauge = meter.createObservableGauge('process_cpu_usage', {
   description: 'CPU usage percentage of the process',

@@ -1,0 +1,72 @@
+groups:
+  - name: infrastructure
+    interval: 15s
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage trên {{ $labels.instance }} vượt 80%"
+          description: "CPU usage hiện tại: {{ $value | humanize }}%"
+
+      - alert: HighRAMUsage
+        expr: (node_memory_active_bytes + node_memory_wired_bytes) / node_memory_total_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAM usage trên {{ $labels.instance }} vượt 80%"
+          description: "RAM usage hiện tại: {{ $value | humanize }}%"
+
+      - alert: SystemOverloaded
+        expr: node_load1 / count(node_cpu_seconds_total{mode="idle"}) by(instance) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Hệ thống quá tải (load average > 1.0/core)"
+          description: "Load average 1m: {{ $value | humanize }} per CPU core"
+
+  - name: application
+    interval: 15s
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_server_requests_total{status=~"5.."}[5m]) / rate(http_server_requests_total[5m]) * 100 > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Tỉ lệ lỗi HTTP 5xx vượt 1%"
+          description: "Error rate: {{ $value | humanize }}%"
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, rate(http_server_duration_milliseconds_bucket[5m])) > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 latency vượt 500ms"
+          description: "P95 latency: {{ $value | humanize }}ms"
+
+      - alert: AppTrafficDrop
+        expr: rate(app_access_total[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Lưu lượng ứng dụng giảm mạnh"
+          description: "Request rate: {{ $value | humanize }} req/s"
+
+  - name: database
+    interval: 15s
+    rules:
+      - alert: SlowQuerySpike
+        expr: rate(slow_query_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Số lượng slow query tăng đột biến"
+          description: "Slow query rate: {{ $value | humanize }} queries/s"

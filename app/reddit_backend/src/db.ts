@@ -1,6 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { metrics } from '@opentelemetry/api';
+
+const meter = metrics.getMeter('app-db');
+const slowQueryCounter = meter.createCounter('slow_query_total', {
+  description: 'Total number of slow queries (>200ms)',
+});
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -29,6 +35,7 @@ export const db =
 
     prisma.$on("query" as any, (e: any) => {
       if (e.duration > 200) {
+        slowQueryCounter.add(1);
         console.log(JSON.stringify({
           timestamp: new Date().toISOString(),
           type: "slow_query",
