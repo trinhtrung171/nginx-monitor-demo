@@ -7,7 +7,7 @@
     {
       "id": 1,
       "title": "CPU Usage %",
-      "type": "gauge",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "fieldConfig": {
         "defaults": {
@@ -34,7 +34,7 @@
     {
       "id": 2,
       "title": "RAM Usage %",
-      "type": "gauge",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "fieldConfig": {
         "defaults": {
@@ -108,11 +108,11 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{device=\"eth0\"}[1m])",
+          "expr": "rate(node_network_receive_bytes_total{device=\"en0\"}[1m])",
           "legendFormat": "In"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{device=\"eth0\"}[1m])",
+          "expr": "rate(node_network_transmit_bytes_total{device=\"en0\"}[1m])",
           "legendFormat": "Out"
         }
       ],
