@@ -6,12 +6,12 @@
   "panels": [
     {
       "id": 1,
-      "title": "Top 10 IPs",
+      "title": "Top 10 IP Addresses",
       "type": "table",
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "topk(10, sum by(ip) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range])))",
+          "expr": "topk(10, sum by(ip) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" [$__range])))",
           "legendFormat": "__auto",
           "queryType": "instant",
           "refId": "A"
@@ -20,7 +20,6 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "displayMode": "color-text",
             "align": "left"
           }
         },
@@ -28,69 +27,68 @@
           {
             "matcher": { "id": "byName", "options": "Value #A" },
             "properties": [
-              { "id": "custom.displayName", "value": "Requests" },
-              { "id": "custom.width", "value": 120 }
+              { "id": "custom.displayName", "value": "Request Count" },
+              { "id": "custom.width", "value": 160 }
             ]
           }
         ]
       },
-      "gridPos": { "h": 10, "w": 10, "x": 0, "y": 0 }
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 }
     },
     {
       "id": 2,
-      "title": "User Journey",
-      "type": "logs",
+      "title": "Request Rate (req/s)",
+      "type": "timeseries",
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "{service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | line_format \"{{.timestamp | substr 0 19}} [{{.user_id | trunc 12}}] {{.method}} {{.path}} ({{.duration_ms}}ms, {{.status}})\"",
-          "legendFormat": "",
+          "expr": "sum(rate({service_name=\"devshare-backend\"} | json | __error__=\"\" [1m]))",
+          "legendFormat": "req/s",
           "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "gridPos": { "h": 10, "w": 14, "x": 10, "y": 0 }
-    },
-    {
-      "id": 3,
-      "title": "Avg Response Time",
-      "type": "stat",
-      "datasource": { "uid": "devshare-loki", "type": "loki" },
-      "targets": [
-        {
-          "expr": "avg(avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [$__range]))",
-          "legendFormat": "",
-          "queryType": "instant",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ms",
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "value": null, "color": "green" },
-              { "value": 100, "color": "yellow" },
-              { "value": 500, "color": "red" }
-            ]
+          "unit": "reqps",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "spanNulls": false,
+            "showPoints": "never"
           }
         }
       },
-      "gridPos": { "h": 10, "w": 4, "x": 20, "y": 0 }
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 }
     },
     {
-      "id": 4,
-      "title": "HTTP Method Breakdown",
+      "id": 3,
+      "title": "HTTP Status Distribution",
       "type": "piechart",
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "sum by(method) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range]))",
-          "legendFormat": "__auto",
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | status >= 200 | status < 300 [$__range]))",
+          "legendFormat": "2xx Success",
           "queryType": "instant",
           "refId": "A"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | status >= 300 | status < 400 [$__range]))",
+          "legendFormat": "3xx Redirect",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | status >= 400 | status < 500 [$__range]))",
+          "legendFormat": "4xx Client Error",
+          "queryType": "instant",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | status >= 500 [$__range]))",
+          "legendFormat": "5xx Server Error",
+          "queryType": "instant",
+          "refId": "D"
         }
       ],
       "fieldConfig": {
@@ -98,47 +96,62 @@
           "unit": "short"
         }
       },
-      "gridPos": { "h": 7, "w": 6, "x": 0, "y": 10 }
+      "options": {
+        "displayLabels": ["name", "percent"]
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 }
+    },
+    {
+      "id": 4,
+      "title": "Most Called Endpoints",
+      "type": "barchart",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by(method, path) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" [$__range])))",
+          "legendFormat": "{{method}} {{path}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.6
+          }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "sort": "descending"
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 }
     },
     {
       "id": 5,
-      "title": "Status Code Breakdown",
-      "type": "table",
+      "title": "User Activity Log",
+      "type": "logs",
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "sum by(status) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range]))",
-          "legendFormat": "__auto",
-          "queryType": "instant",
+          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | line_format \"{{.timestamp}} | {{.ip}} | {{.user_id}} | {{.method}} {{.path}} → {{.status}} ({{.duration_ms}}ms)\"",
+          "legendFormat": "",
+          "queryType": "range",
           "refId": "A"
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "left"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Value #A" },
-            "properties": [
-              { "id": "custom.displayName", "value": "Count" },
-              { "id": "custom.width", "value": 120 }
-            ]
-          }
-        ]
-      },
-      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 10 }
+      "gridPos": { "h": 11, "w": 24, "x": 0, "y": 18 }
     },
     {
       "id": 6,
-      "title": "Bandwidth per IP",
+      "title": "Bandwidth per IP (bytes sent)",
       "type": "table",
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "topk(10, sum by(ip) (sum_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap bytes_sent [$__range])))",
+          "expr": "topk(10, sum by(ip) (sum_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | unwrap bytes_sent [$__range])))",
           "legendFormat": "__auto",
           "queryType": "instant",
           "refId": "A"
@@ -146,7 +159,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
+          "unit": "decbytes",
           "custom": {
             "align": "left"
           }
@@ -155,76 +168,13 @@
           {
             "matcher": { "id": "byName", "options": "Value #A" },
             "properties": [
-              { "id": "custom.displayName", "value": "Bytes" },
-              { "id": "custom.width", "value": 120 }
+              { "id": "custom.displayName", "value": "Bytes Sent" },
+              { "id": "custom.width", "value": 160 }
             ]
           }
         ]
       },
-      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 10 }
-    },
-    {
-      "id": 7,
-      "title": "Total Requests per Endpoint",
-      "type": "table",
-      "datasource": { "uid": "devshare-loki", "type": "loki" },
-      "targets": [
-        {
-          "expr": "topk(10, sum by(path) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range])))",
-          "legendFormat": "__auto",
-          "queryType": "instant",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "left"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Value #A" },
-            "properties": [
-              { "id": "custom.displayName", "value": "Requests" },
-              { "id": "custom.width", "value": 120 }
-            ]
-          }
-        ]
-      },
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 17 }
-    },
-    {
-      "id": 8,
-      "title": "Avg Response Time by Route",
-      "type": "table",
-      "datasource": { "uid": "devshare-loki", "type": "loki" },
-      "targets": [
-        {
-          "expr": "topk(10, sum by(path) (avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [$__range])))",
-          "legendFormat": "__auto",
-          "queryType": "instant",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms",
-          "custom": {
-            "align": "left"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Value #A" },
-            "properties": [
-              { "id": "custom.displayName", "value": "Avg (ms)" },
-              { "id": "custom.width", "value": 120 }
-            ]
-          }
-        ]
-      },
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 17 }
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 29 }
     }
   ]
 }
