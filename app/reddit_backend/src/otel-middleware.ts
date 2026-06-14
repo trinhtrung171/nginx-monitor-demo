@@ -18,6 +18,7 @@ export const appAccessCounter = meter.createCounter('app_access_total', {
 export const errorCounter = meter.createCounter('app_errors_total', {
   description: 'Total number of unhandled errors',
 });
+
 errorCounter.add(0, { method: "INIT", path: "/init" });
 
 // Đo đạc CPU & RAM tùy chỉnh cho Bun (Tránh crash lỗi node:v8 getHeapSpaceStatistics trên Bun)

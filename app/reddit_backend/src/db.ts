@@ -9,6 +9,14 @@ const slowQueryCounter = meter.createCounter('slow_query_total', {
 });
 slowQueryCounter.add(0);
 
+const queryDurationHistogram = meter.createHistogram('db_query_duration_milliseconds', {
+  description: 'Duration of database queries in milliseconds',
+});
+const queriesTotal = meter.createCounter('db_queries_total', {
+  description: 'Total number of database queries',
+});
+queriesTotal.add(0);
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
@@ -35,6 +43,8 @@ export const db =
     });
 
     prisma.$on("query" as any, (e: any) => {
+      queryDurationHistogram.record(e.duration, { query: e.query.substring(0, 100) });
+      queriesTotal.add(1);
       if (e.duration > 200) {
         slowQueryCounter.add(1);
         console.log(JSON.stringify({
