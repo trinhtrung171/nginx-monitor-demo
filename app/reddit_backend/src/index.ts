@@ -1,4 +1,4 @@
-import './monitoring'; // Bắt buộc phải nằm ở dòng đầu tiên của file chính
+import './monitoring';
 import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { staticPlugin } from "@elysiajs/static";
@@ -12,7 +12,7 @@ import { accessLogRoutes } from "./routes/accessLogs";
 import { db } from "./db";
 import { mkdir } from "fs/promises";
 
-import { registerOTel, errorCounter } from "./otel-middleware";
+import { registerOTel, setAppServer, errorCounter } from "./otel-middleware";
 import { registerAccessLogger } from "./access-logger";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -65,6 +65,8 @@ app
   .use(notificationRoutes)
   .use(accessLogRoutes)
   .listen({ port: Number(process.env.PORT) || 3001, hostname: "0.0.0.0" });
+
+setAppServer(app.server);
 
 db.$connect().then(() => console.log('Database connected'));
 

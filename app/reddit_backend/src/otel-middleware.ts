@@ -1,4 +1,4 @@
-import { Elysia } from 'elysia';
+import type { Elysia } from 'elysia';
 import { metrics } from '@opentelemetry/api';
 
 const meter = metrics.getMeter('elysia-http');
@@ -55,8 +55,13 @@ memoryGauge.addCallback(result => {
 
 const startTimes = new WeakMap<Request, number>();
 
-export const getClientIp = (request: Request, app?: Elysia) => {
-  // 1. Cloudflare connecting IP
+let _server: any = null;
+
+export function setAppServer(server: any) {
+  _server = server;
+}
+
+export const getClientIp = (request: Request) => {
   const cfConnectingIp = request.headers.get('cf-connecting-ip');
   if (cfConnectingIp) {
     let ip = cfConnectingIp.trim();
@@ -64,7 +69,6 @@ export const getClientIp = (request: Request, app?: Elysia) => {
     return ip;
   }
 
-  // 2. Standard X-Forwarded-For (first IP is the client IP)
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
     let firstIp = forwarded.split(',')[0].trim();
@@ -74,7 +78,6 @@ export const getClientIp = (request: Request, app?: Elysia) => {
     }
   }
 
-  // 3. Alternative proxy headers
   const realIp = request.headers.get('x-real-ip');
   if (realIp) {
     let ip = realIp.trim();
@@ -97,9 +100,8 @@ export const getClientIp = (request: Request, app?: Elysia) => {
   }
 
   try {
-    // 4. Fallback to socket IP from Bun Server
-    if (app?.server) {
-      const socketAddr = app.server.requestIP(request);
+    if (_server) {
+      const socketAddr = _server.requestIP(request);
       if (socketAddr?.address) {
         let ip = socketAddr.address;
         if (ip.startsWith('::ffff:')) ip = ip.substring(7);
@@ -123,7 +125,7 @@ export function registerOTel(app: Elysia) {
       const method = request.method;
       
       const activePath = route || path || new URL(request.url).pathname;
-      const clientIp = getClientIp(request, app);
+      const clientIp = getClientIp(request);
 
       requestCounter.add(1, {
         method,

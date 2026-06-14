@@ -11,7 +11,7 @@
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "sum by(ip) (count_over_time({service=\"devshare-backend\"} | json [1h]))",
+          "expr": "sum by(ip) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [1h]))",
           "legendFormat": "",
           "queryType": "range"
         }
@@ -25,7 +25,7 @@
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "sum by(path) (count_over_time({service=\"devshare-backend\"} | json [1h]))",
+          "expr": "sum by(path) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [1h]))",
           "legendFormat": "",
           "queryType": "range"
         }
@@ -39,7 +39,7 @@
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "sum by(status) (count_over_time({service=\"devshare-backend\"} | json [1h]))",
+          "expr": "sum by(status) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [1h]))",
           "legendFormat": "",
           "queryType": "range"
         }
@@ -53,7 +53,7 @@
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "sum by(path) (avg_over_time({service=\"devshare-backend\"} | json | unwrap duration_ms [1h]))",
+          "expr": "sum by(path) (avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [1h]))",
           "legendFormat": "",
           "queryType": "range"
         }
