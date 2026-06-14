@@ -59,17 +59,38 @@
       "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 }
     },
     {
+      "id": 5,
+      "title": "System Load",
+      "type": "timeseries",
+      "datasource": { "uid": "prometheus-local" },
+      "targets": [
+        {
+          "expr": "node_load1",
+          "legendFormat": "Load 1m"
+        },
+        {
+          "expr": "node_load5",
+          "legendFormat": "Load 5m"
+        },
+        {
+          "expr": "node_load15",
+          "legendFormat": "Load 15m"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
       "id": 3,
       "title": "Disk I/O",
       "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "rate(node_disk_read_bytes_total[1m])",
+          "expr": "sum(rate(node_disk_read_bytes_total[1m]))",
           "legendFormat": "Read"
         },
         {
-          "expr": "rate(node_disk_written_bytes_total[1m])",
+          "expr": "sum(rate(node_disk_written_bytes_total[1m]))",
           "legendFormat": "Write"
         }
       ],
@@ -78,7 +99,7 @@
           "unit": "bytes"
         }
       },
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 }
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
     },
     {
       "id": 4,
@@ -87,11 +108,11 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[1m])",
+          "expr": "rate(node_network_receive_bytes_total{device=\"eth0\"}[1m])",
           "legendFormat": "In"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[1m])",
+          "expr": "rate(node_network_transmit_bytes_total{device=\"eth0\"}[1m])",
           "legendFormat": "Out"
         }
       ],
@@ -100,7 +121,7 @@
           "unit": "bytes"
         }
       },
-      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 }
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
     }
   ]
 }

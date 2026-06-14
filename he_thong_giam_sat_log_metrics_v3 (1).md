@@ -63,15 +63,16 @@ docker compose up -d
 ## 1. Metrics Summary by Architecture Layer
 
 ### Layer 1: Infrastructure & System Resources
+
 *Objective: Monitor CPU, RAM, Disk, and Network on the local macOS machine running the backend.*
 
-| Metric Group | Specific Metrics | Collection Source | How to Use |
-| :--- | :--- | :--- | :--- |
-| **CPU Usage** | `node_cpu_seconds_total` | `node_exporter` | **PromQL:** `100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100)` → Grafana "Gauge" panel, alert if > 80% |
-| **Memory** | `node_memory_active_bytes`<br>`node_memory_wired_bytes`<br>`node_memory_total_bytes` | `node_exporter` | **PromQL:** `(node_memory_active_bytes + node_memory_wired_bytes) / node_memory_total_bytes * 100` → "Used RAM %" panel. Uses macOS-native fields (`active` + `wired`) instead of Linux-only `MemAvailable`. |
-| **Disk I/O** | `node_disk_read_bytes_total`<br>`node_disk_written_bytes_total` | `node_exporter` | **PromQL:** `rate(node_disk_read_bytes_total[1m])` → "Disk Read/Write Speed" time-series panel |
-| **Network I/O** | `node_network_receive_bytes_total`<br>`node_network_transmit_bytes_total` | `node_exporter` | **PromQL:** `rate(node_network_receive_bytes_total{device="en0"}[1m])` → replace `en0` with your macOS network interface |
-| **System Load** | `node_load1`<br>`node_load5`<br>`node_load15` | `node_exporter` | Compare `node_load1` against CPU core count. If `load1 / cores > 1.0`, system is overloaded. |
+| Metric Group          | Specific Metrics                                                                           | Collection Source | How to Use                                                                                                                                                                                                                  |
+| :-------------------- | :----------------------------------------------------------------------------------------- | :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CPU Usage**   | `node_cpu_seconds_total`                                                                 | `node_exporter` | **PromQL:** `100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100)` → Grafana "Gauge" panel, alert if > 80%                                                                                |
+| **Memory**      | `node_memory_active_bytes<br>``node_memory_wired_bytes<br>``node_memory_total_bytes` | `node_exporter` | **PromQL:** `(node_memory_active_bytes + node_memory_wired_bytes) / node_memory_total_bytes * 100` → "Used RAM %" panel. Uses macOS-native fields (`active` + `wired`) instead of Linux-only `MemAvailable`. |
+| **Disk I/O**    | `node_disk_read_bytes_total<br>``node_disk_written_bytes_total`                        | `node_exporter` | **PromQL:** `rate(node_disk_read_bytes_total[1m])` → "Disk Read/Write Speed" time-series panel                                                                                                                     |
+| **Network I/O** | `node_network_receive_bytes_total<br>``node_network_transmit_bytes_total`              | `node_exporter` | **PromQL:** `rate(node_network_receive_bytes_total{device="en0"}[1m])` → replace `en0` with your macOS network interface                                                                                         |
+| **System Load** | `node_load1<br>``node_load5<br>``node_load15`                                        | `node_exporter` | Compare `node_load1` against CPU core count. If `load1 / cores > 1.0`, system is overloaded.                                                                                                                            |
 
 **Installing node_exporter on macOS:**
 
@@ -99,16 +100,17 @@ scrape_configs:
 ---
 
 ### Layer 2: Application Layer (APM)
+
 *Objective: Measure backend performance, detect errors, and identify slow endpoints.*
 
-| Metric Group | Specific Metrics | Collection Source | How to Use |
-| :--- | :--- | :--- | :--- |
-| **Request Count** | `http_server_requests_total` | OpenTelemetry SDK | **PromQL:** `sum by(route, method, status_code)(rate(http_server_requests_total[1m]))` → "Top Endpoints by Traffic" bar chart |
-| **HTTP Status Codes** | `http_server_requests_total{status_code=~"5.."}` | OpenTelemetry SDK | **PromQL:** `rate(http_server_requests_total{status_code=~"5.."}[5m])` → "Error Rate %" panel, alert if > 1% |
-| **Response Latency** | `http_server_duration_milliseconds` (Histogram) | OpenTelemetry SDK | **PromQL:** `histogram_quantile(0.95, rate(http_server_duration_milliseconds_bucket[5m]))` → "p95 Latency" panel |
-| **App Process CPU** | `process_cpu_usage` | OpenTelemetry SDK | Isolates CPU consumed only by your app process (Node.js / Python / Go), separate from OS-level CPU |
-| **App Process RAM** | `process_resident_memory_bytes` | OpenTelemetry SDK | Useful for detecting memory leaks — watch for steady upward trend over hours |
-| **Error Count** | `app_errors_total` (custom counter) | OTel SDK / Log Parser | Increment this counter in your error handler (`try/catch`) to count unhandled exceptions |
+| Metric Group                | Specific Metrics                                   | Collection Source     | How to Use                                                                                                                             |
+| :-------------------------- | :------------------------------------------------- | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| **Request Count**     | `http_server_requests_total`                     | OpenTelemetry SDK     | **PromQL:** `sum by(route, method, status_code)(rate(http_server_requests_total[1m]))` → "Top Endpoints by Traffic" bar chart |
+| **HTTP Status Codes** | `http_server_requests_total{status_code=~"5.."}` | OpenTelemetry SDK     | **PromQL:** `rate(http_server_requests_total{status_code=~"5.."}[5m])` → "Error Rate %" panel, alert if > 1%                  |
+| **Response Latency**  | `http_server_duration_milliseconds` (Histogram)  | OpenTelemetry SDK     | **PromQL:** `histogram_quantile(0.95, rate(http_server_duration_milliseconds_bucket[5m]))` → "p95 Latency" panel              |
+| **App Process CPU**   | `process_cpu_usage`                              | OpenTelemetry SDK     | Isolates CPU consumed only by your app process (Node.js / Python / Go), separate from OS-level CPU                                     |
+| **App Process RAM**   | `process_resident_memory_bytes`                  | OpenTelemetry SDK     | Useful for detecting memory leaks — watch for steady upward trend over hours                                                          |
+| **Error Count**       | `app_errors_total` (custom counter)              | OTel SDK / Log Parser | Increment this counter in your error handler (`try/catch`) to count unhandled exceptions                                             |
 
 **Installing OpenTelemetry (Node.js example):**
 
@@ -134,6 +136,7 @@ sdk.start();
 ---
 
 ### Layer 3: User Access Log Tracking
+
 *Objective: Track who accessed what, from which IP, what action they took, and how much resource was consumed.*
 
 **Required log format — emit this on every request:**
@@ -206,25 +209,26 @@ scrape_configs:
 {job="backend"} | json | user_id="u_123"
 ```
 
-| What to Track | Loki Label / Field | Grafana Panel Type |
-| :--- | :--- | :--- |
-| Requests per IP | `ip` field | Table — Top IPs |
-| User actions by path | `path` + `user_id` | Logs panel — User Journey |
-| HTTP method breakdown | `method` field | Pie chart |
-| Status code over time | `status` field | Time series |
-| Avg response time | `duration_ms` | Stat / Gauge |
-| Bandwidth per IP | `bytes_sent` grouped by `ip` | Bar chart |
+| What to Track         | Loki Label / Field               | Grafana Panel Type         |
+| :-------------------- | :------------------------------- | :------------------------- |
+| Requests per IP       | `ip` field                     | Table — Top IPs           |
+| User actions by path  | `path` + `user_id`           | Logs panel — User Journey |
+| HTTP method breakdown | `method` field                 | Pie chart                  |
+| Status code over time | `status` field                 | Time series                |
+| Avg response time     | `duration_ms`                  | Stat / Gauge               |
+| Bandwidth per IP      | `bytes_sent` grouped by `ip` | Bar chart                  |
 
 ---
 
 ### Layer 4: Database Query Monitoring
+
 *Objective: Detect slow queries that degrade user experience.*
 
-| Metric | How to Collect | How to Use |
-| :--- | :--- | :--- |
-| **Query execution time** | ORM middleware hook (see below) | Log all queries with duration; filter those > 200ms |
-| **Slow query count** | Custom Prometheus counter | Alert when slow query rate spikes |
-| **Query count per request** | Context-level counter | Detect N+1 query problems (many small queries per request) |
+| Metric                            | How to Collect                  | How to Use                                                 |
+| :-------------------------------- | :------------------------------ | :--------------------------------------------------------- |
+| **Query execution time**    | ORM middleware hook (see below) | Log all queries with duration; filter those > 200ms        |
+| **Slow query count**        | Custom Prometheus counter       | Alert when slow query rate spikes                          |
+| **Query count per request** | Context-level counter           | Detect N+1 query problems (many small queries per request) |
 
 **Prisma example (log slow queries):**
 
@@ -261,13 +265,14 @@ const sequelize = new Sequelize(DB_URL, {
 ---
 
 ### Layer 5: HTTP Endpoint Health Check (Blackbox Probing)
+
 *Objective: Simulate external requests to verify your Render.com deployment is reachable and responding correctly.*
 
-| Metric | Meaning | Alert Condition |
-| :--- | :--- | :--- |
-| `probe_success` | 1 = up, 0 = down | Alert immediately when = 0 |
-| `probe_http_status_code` | Actual HTTP code returned | Alert if ≠ 200 |
-| `probe_duration_seconds` | Total round-trip time | Alert if > 3s |
+| Metric                     | Meaning                   | Alert Condition            |
+| :------------------------- | :------------------------ | :------------------------- |
+| `probe_success`          | 1 = up, 0 = down          | Alert immediately when = 0 |
+| `probe_http_status_code` | Actual HTTP code returned | Alert if ≠ 200            |
+| `probe_duration_seconds` | Total round-trip time     | Alert if > 3s              |
 
 **`prometheus.yml` — add blackbox probe for your Render URL:**
 
@@ -326,20 +331,20 @@ Row 4 — Database
 
 ## 3. Key Metrics Checklist
 
-| # | Metric | Source | Priority |
-|---|--------|--------|----------|
-| 1 | CPU Usage % | node_exporter | ✅ Must have |
-| 2 | RAM Usage % | node_exporter | ✅ Must have |
-| 3 | Request count by endpoint | OTel | ✅ Must have |
-| 4 | HTTP error rate (5xx) | OTel | ✅ Must have |
-| 5 | Response latency p95 | OTel | ✅ Must have |
-| 6 | Access log (IP, user, action) | App middleware | ✅ Must have |
-| 7 | Bandwidth per request | App middleware | ✅ Must have |
-| 8 | Slow query detection | ORM hook | ✅ Must have |
-| 9 | Render.com uptime probe | blackbox_exporter | ✅ Must have |
-| 10 | Disk I/O | node_exporter | ⚡ Good to have |
-| 11 | Network I/O | node_exporter | ⚡ Good to have |
-| 12 | GeoIP per IP | MaxMind GeoLite2 | ⚡ Good to have |
+| #  | Metric                        | Source            | Priority        |
+| -- | ----------------------------- | ----------------- | --------------- |
+| 1  | CPU Usage %                   | node_exporter     | ✅ Must have    |
+| 2  | RAM Usage %                   | node_exporter     | ✅ Must have    |
+| 3  | Request count by endpoint     | OTel              | ✅ Must have    |
+| 4  | HTTP error rate (5xx)         | OTel              | ✅ Must have    |
+| 5  | Response latency p95          | OTel              | ✅ Must have    |
+| 6  | Access log (IP, user, action) | App middleware    | ✅ Must have    |
+| 7  | Bandwidth per request         | App middleware    | ✅ Must have    |
+| 8  | Slow query detection          | ORM hook          | ✅ Must have    |
+| 9  | Render.com uptime probe       | blackbox_exporter | ✅ Must have    |
+| 10 | Disk I/O                      | node_exporter     | ⚡ Good to have |
+| 11 | Network I/O                   | node_exporter     | ⚡ Good to have |
+| 12 | GeoIP per IP                  | MaxMind GeoLite2  | ⚡ Good to have |
 
 ---
 
