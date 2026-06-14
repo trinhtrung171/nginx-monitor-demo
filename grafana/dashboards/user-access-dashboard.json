@@ -443,8 +443,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "devshare-postgres-local"
+        "type": "grafana-postgresql-datasource",
+        "uid": "devshare-postgres"
       },
       "fieldConfig": {
         "defaults": {
@@ -489,9 +489,33 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "rawSql": "SELECT\n  \"AccessLog\".\"createdAt\" AS \"Time\",\n  \"AccessLog\".\"ip\" AS \"IP\",\n  COALESCE(\"User\".\"username\", 'Anonymous') AS \"User\",\n  \"AccessLog\".\"userAgent\" AS \"User Agent\"\nFROM \"AccessLog\"\nLEFT JOIN \"User\" ON \"AccessLog\".\"userId\" = \"User\".\"id\"\nWHERE $__timeFilter(\"AccessLog\".\"createdAt\")\nORDER BY \"AccessLog\".\"createdAt\" DESC\nLIMIT 200",
+          "dataset": "neondb",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
+          "editorMode": "code",
           "format": "table",
-          "refId": "A"
+          "rawQuery": true,
+          "rawSql": "SELECT \n  al.\"createdAt\",\n  al.\"ip\",\n  COALESCE(u.username, 'Guest') AS username,\n  al.\"userAgent\"\nFROM \"AccessLog\" al\nLEFT JOIN \"User\" u ON al.\"userId\" = u.\"id\"\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "Access Logs (Database)",
@@ -513,6 +537,6 @@
   "timezone": "browser",
   "title": "User Access Logs",
   "uid": "user-access-dashboard",
-  "version": 8,
+  "version": 11,
   "weekStart": ""
 }
