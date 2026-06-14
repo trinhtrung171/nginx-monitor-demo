@@ -7,7 +7,7 @@
     {
       "id": 1,
       "title": "Probe Success",
-      "type": "stat",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
@@ -21,13 +21,10 @@
           "thresholds": {
             "steps": [
               { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
+              { "color": "green", "value": 0.5 }
             ]
           },
-          "reduceOptions": {
-            "values": false,
-            "calcs": ["lastNotNull"]
-          }
+          "custom": { "showPoints": "never" }
         }
       },
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
@@ -35,14 +32,29 @@
     {
       "id": 2,
       "title": "HTTP Status Code",
-      "type": "stat",
+      "type": "timeseries",
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "probe_http_status_code",
+          "expr": "probe_http_status_code{job=\"blackbox\"}",
           "legendFormat": "{{instance}}"
         }
       ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "red", "value": 100 },
+              { "color": "green", "value": 200 },
+              { "color": "yellow", "value": 300 },
+              { "color": "orange", "value": 400 },
+              { "color": "red", "value": 500 }
+            ]
+          },
+          "custom": { "showPoints": "never" }
+        }
+      },
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
     },
     {
@@ -52,7 +64,7 @@
       "datasource": { "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "probe_duration_seconds",
+          "expr": "probe_duration_seconds{job=\"blackbox\"}",
           "legendFormat": "{{instance}}"
         }
       ],
