@@ -25,7 +25,7 @@ services:
       DATABASE_URL: "postgresql://reddit_user:reddit_password@devshare-db:5432/reddit_clone"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
       OTEL_SERVICE_NAME: "devshare-backend"
-      PUBLIC_URL: "http://localhost:3001"
+      PUBLIC_URL: "http://localhost:8080"
       PORT: "3001"
     volumes:
       - ./app/reddit_backend/public/uploads:/app/public/uploads

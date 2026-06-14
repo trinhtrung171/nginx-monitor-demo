@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
     try { return JSON.parse(localStorage.getItem('ds_user')) } catch { return null }
   })
 
-  const API = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+  const API = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
   const login = async (identifier, password) => {
     const res = await fetch(`${API}/auth/login`, {

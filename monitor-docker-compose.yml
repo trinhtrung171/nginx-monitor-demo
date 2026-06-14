@@ -58,6 +58,8 @@ services:
     container_name: loki
     ports:
       - "3100:3100"
+    volumes:
+      - ./loki_data:/loki
     networks:
       - global-monitor-net
     restart: unless-stopped

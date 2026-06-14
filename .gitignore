@@ -27,6 +27,7 @@ data/
 prometheus_data/
 grafana_data/
 alertmanager_data/
+loki_data/
 
 # Node & Python
 node_modules/

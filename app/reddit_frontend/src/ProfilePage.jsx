@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 import MediaRenderer from './MediaRenderer'
 import MarkdownRenderer from './MarkdownRenderer'
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 const timeAgo = (d) => {
   const diff = Date.now() - new Date(d).getTime()
   const m = Math.floor(diff / 60000)
