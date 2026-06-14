@@ -12,11 +12,29 @@
       "targets": [
         {
           "expr": "topk(10, sum by(ip) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range])))",
-          "legendFormat": "",
-          "queryType": "range"
+          "legendFormat": "__auto",
+          "queryType": "instant",
+          "refId": "A"
         }
       ],
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "displayMode": "color-text",
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value #A" },
+            "properties": [
+              { "id": "custom.displayName", "value": "Requests" },
+              { "id": "custom.width", "value": 120 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 10, "x": 0, "y": 0 }
     },
     {
       "id": 2,
@@ -25,12 +43,13 @@
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "{service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\"",
+          "expr": "{service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | line_format \"{{.timestamp | substr 0 19}} [{{.user_id | trunc 12}}] {{.method}} {{.path}} ({{.duration_ms}}ms, {{.status}})\"",
           "legendFormat": "",
-          "queryType": "range"
+          "queryType": "range",
+          "refId": "A"
         }
       ],
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
+      "gridPos": { "h": 10, "w": 14, "x": 10, "y": 0 }
     },
     {
       "id": 3,
@@ -41,15 +60,25 @@
         {
           "expr": "avg(avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [$__range]))",
           "legendFormat": "",
-          "queryType": "range"
+          "queryType": "instant",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ms"
+          "unit": "ms",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 100, "color": "yellow" },
+              { "value": 500, "color": "red" }
+            ]
+          }
         }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 }
+      "gridPos": { "h": 10, "w": 4, "x": 20, "y": 0 }
     },
     {
       "id": 4,
@@ -59,77 +88,143 @@
       "targets": [
         {
           "expr": "sum by(method) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range]))",
-          "legendFormat": "",
-          "queryType": "range"
-        }
-      ],
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 }
-    },
-    {
-      "id": 5,
-      "title": "Requests by Endpoint",
-      "type": "barchart",
-      "datasource": { "uid": "devshare-loki", "type": "loki" },
-      "targets": [
-        {
-          "expr": "topk(10, sum by(path) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range])))",
-          "legendFormat": "",
-          "queryType": "range"
-        }
-      ],
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 }
-    },
-    {
-      "id": 6,
-      "title": "Bandwidth per IP",
-      "type": "barchart",
-      "datasource": { "uid": "devshare-loki", "type": "loki" },
-      "targets": [
-        {
-          "expr": "topk(10, sum by(ip) (sum_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap bytes_sent [$__range])))",
-          "legendFormat": "",
-          "queryType": "range"
+          "legendFormat": "__auto",
+          "queryType": "instant",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "short"
         }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 }
+      "gridPos": { "h": 7, "w": 6, "x": 0, "y": 10 }
     },
     {
-      "id": 7,
-      "title": "Status Code over Time",
-      "type": "timeseries",
+      "id": 5,
+      "title": "Status Code Breakdown",
+      "type": "table",
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
           "expr": "sum by(status) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range]))",
-          "legendFormat": "{{status}}",
-          "queryType": "range"
-        }
-      ],
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
-    },
-    {
-      "id": 8,
-      "title": "Response Time by Route",
-      "type": "barchart",
-      "datasource": { "uid": "devshare-loki", "type": "loki" },
-      "targets": [
-        {
-          "expr": "topk(10, sum by(path) (avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [$__range])))",
-          "legendFormat": "",
-          "queryType": "range"
+          "legendFormat": "__auto",
+          "queryType": "instant",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ms"
-        }
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value #A" },
+            "properties": [
+              { "id": "custom.displayName", "value": "Count" },
+              { "id": "custom.width", "value": 120 }
+            ]
+          }
+        ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 10 }
+    },
+    {
+      "id": 6,
+      "title": "Bandwidth per IP",
+      "type": "table",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by(ip) (sum_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap bytes_sent [$__range])))",
+          "legendFormat": "__auto",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value #A" },
+            "properties": [
+              { "id": "custom.displayName", "value": "Bytes" },
+              { "id": "custom.width", "value": 120 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 10 }
+    },
+    {
+      "id": 7,
+      "title": "Total Requests per Endpoint",
+      "type": "table",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by(path) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range])))",
+          "legendFormat": "__auto",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value #A" },
+            "properties": [
+              { "id": "custom.displayName", "value": "Requests" },
+              { "id": "custom.width", "value": 120 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 17 }
+    },
+    {
+      "id": 8,
+      "title": "Avg Response Time by Route",
+      "type": "table",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by(path) (avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [$__range])))",
+          "legendFormat": "__auto",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value #A" },
+            "properties": [
+              { "id": "custom.displayName", "value": "Avg (ms)" },
+              { "id": "custom.width", "value": 120 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 17 }
     }
   ]
 }
