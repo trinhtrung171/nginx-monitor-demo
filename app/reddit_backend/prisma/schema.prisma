@@ -175,11 +175,17 @@ model Bookmark {
 }
 
 model AccessLog {
-  id        String   @id @default(cuid())
-  ip        String
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  userAgent String?
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  ip         String
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  username   String?
+  userAgent  String?
+  method     String?
+  path       String?
+  status     Int?
+  durationMs Int?
+  bytesSent  Int?
+  createdAt  DateTime @default(now())
 }
 

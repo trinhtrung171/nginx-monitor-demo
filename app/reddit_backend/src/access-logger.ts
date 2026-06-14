@@ -1,5 +1,22 @@
 import { Elysia } from 'elysia';
 import { getClientIp } from './otel-middleware';
+import { db } from './db';
+
+const usernameCache = new Map<string, { username: string; expiresAt: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+async function getUsername(userId: string): Promise<string> {
+  const cached = usernameCache.get(userId);
+  if (cached && cached.expiresAt > Date.now()) return cached.username;
+  try {
+    const user = await db.user.findUnique({ where: { id: userId }, select: { username: true } });
+    const username = user?.username || userId;
+    usernameCache.set(userId, { username, expiresAt: Date.now() + CACHE_TTL_MS });
+    return username;
+  } catch {
+    return userId;
+  }
+}
 
 function computeBytesSent(response: unknown): number {
   if (!response) return 0;
@@ -26,7 +43,7 @@ export function registerAccessLogger(app: Elysia) {
     startTimes.set(request, performance.now());
   });
 
-  app.onAfterResponse(({ request, set, path, route, response }) => {
+  app.onAfterResponse(async ({ request, set, path, route, response }) => {
     try {
       const startTime = startTimes.get(request);
       const duration_ms = startTime !== undefined ? Math.round(performance.now() - startTime) : 0;
@@ -37,12 +54,13 @@ export function registerAccessLogger(app: Elysia) {
       const activePath = route || path || new URL(request.url).pathname;
       const ip = getClientIp(request);
       const userAgent = request.headers.get('user-agent') || '';
-      const userId = request.headers.get('x-user-id') || 'anonymous';
+      const userId = request.headers.get('x-user-id');
+      const username = userId ? await getUsername(userId) : 'anonymous';
 
       const logEntry = {
         timestamp: new Date().toISOString(),
         ip,
-        user_id: userId,
+        username,
         method,
         path: activePath,
         status,
@@ -52,6 +70,24 @@ export function registerAccessLogger(app: Elysia) {
       };
 
       console.log(JSON.stringify(logEntry));
+
+      try {
+        await db.accessLog.create({
+          data: {
+            ip: ip || 'unknown',
+            userId: userId || null,
+            username: username !== 'anonymous' ? username : null,
+            userAgent,
+            method,
+            path: activePath,
+            status,
+            durationMs: duration_ms,
+            bytesSent: computeBytesSent(response),
+          }
+        });
+      } catch (dbErr) {
+        console.error('Failed to write access log to DB:', dbErr);
+      }
     } catch (err) {
       startTimes.delete(request);
       console.error('Failed to write access log:', err);

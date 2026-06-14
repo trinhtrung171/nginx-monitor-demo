@@ -62,6 +62,26 @@
               {
                 "id": "custom.width",
                 "value": 160
+              },
+              {
+                "id": "displayName",
+                "value": "Requests"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ip"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              },
+              {
+                "id": "displayName",
+                "value": "IP Address"
               }
             ]
           }
@@ -81,14 +101,20 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "topk(10, sum by(ip) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" [$__range])))",
+          "expr": "topk(10, sum by(ip) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" [$__range])))",
           "legendFormat": "__auto",
           "queryType": "instant",
           "refId": "A"
         }
       ],
       "title": "Top 10 IP Addresses",
-      "type": "table"
+      "type": "table",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {}
+        }
+      ]
     },
     {
       "datasource": {
@@ -177,7 +203,7 @@
         {
           "direction": "backward",
           "editorMode": "code",
-          "expr": "sum(rate({service_name=\"devshare-backend\"} | json | __error__=\"\" [1m]))",
+          "expr": "sum(rate({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" [1m]))",
           "legendFormat": "req/s",
           "queryType": "range",
           "refId": "A"
@@ -206,7 +232,56 @@
           "mappings": [],
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "2xx Success"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "3xx Redirect"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "4xx Client Error"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #D"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "5xx Server Error"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,
@@ -243,7 +318,7 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | status >= 200 | status < 300 [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | status >= 200 | status < 300 [$__range]))",
           "legendFormat": "2xx Success",
           "queryType": "instant",
           "refId": "A"
@@ -305,7 +380,44 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Requests"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "method"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Method"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "path"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Path"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,
@@ -323,14 +435,20 @@
         {
           "direction": "backward",
           "editorMode": "code",
-          "expr": "topk(10, sum by(method, path) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" [$__range])))",
+          "expr": "topk(10, sum by(method, path) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" [$__range])))",
           "legendFormat": "{{method}} {{path}}",
           "queryType": "instant",
           "refId": "A"
         }
       ],
       "title": "Most Called Endpoints",
-      "type": "table"
+      "type": "table",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {}
+        }
+      ]
     },
     {
       "datasource": {
@@ -353,7 +471,7 @@
         "enableInfiniteScrolling": false,
         "enableLogDetails": true,
         "showControls": false,
-        "showTime": false,
+        "showTime": true,
         "sortOrder": "Descending",
         "unwrappedColumns": false,
         "wrapLogMessage": false
@@ -361,7 +479,7 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | line_format \"{{.timestamp}} | {{.ip}} | {{.user_id}} | {{.method}} {{.path}} → {{.status}} ({{.duration_ms}}ms)\"",
+          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | line_format \"{{.timestamp}} | {{.ip}} | {{.username}} | {{.method}} {{.path}} → {{.status}} ({{.duration_ms}}ms)\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -413,6 +531,10 @@
               {
                 "id": "custom.width",
                 "value": 160
+              },
+              {
+                "id": "displayName",
+                "value": "Bytes Sent"
               }
             ]
           }
@@ -432,7 +554,7 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "topk(10, sum by(ip) (sum_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | unwrap bytes_sent [$__range])))",
+          "expr": "topk(10, sum by(ip) (sum_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | unwrap bytes_sent [$__range])))",
           "legendFormat": "__auto",
           "queryType": "instant",
           "refId": "A"
@@ -497,7 +619,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  al.\"createdAt\",\n  al.\"ip\",\n  COALESCE(u.username, 'Guest') AS username,\n  al.\"userAgent\"\nFROM \"AccessLog\" al\nLEFT JOIN \"User\" u ON al.\"userId\" = u.\"id\"\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;\n",
+          "rawSql": "SELECT \n  al.\"createdAt\",\n  al.\"ip\",\n  COALESCE(al.\"username\", 'Guest') AS \"Username\",\n  al.\"method\",\n  al.\"path\",\n  al.\"status\",\n  al.\"durationMs\" AS \"Duration (ms)\",\n  al.\"bytesSent\" AS \"Bytes Sent\"\nFROM \"AccessLog\" al\nWHERE al.\"method\" IS NOT NULL\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -523,20 +645,24 @@
     }
   ],
   "preload": false,
-  "refresh": "",
+  "refresh": "30s",
   "schemaVersion": 42,
-  "tags": [],
+  "tags": [
+    "loki",
+    "access-log",
+    "user"
+  ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "User Access Logs",
   "uid": "user-access-dashboard",
-  "version": 11,
+  "version": 36,
   "weekStart": ""
 }

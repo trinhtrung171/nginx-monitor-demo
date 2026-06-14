@@ -69,6 +69,13 @@ export const getClientIp = (request: Request) => {
     return ip;
   }
 
+  const clientIpHeader = request.headers.get('x-client-ip');
+  if (clientIpHeader) {
+    let ip = clientIpHeader.trim();
+    if (ip.startsWith('::ffff:')) ip = ip.substring(7);
+    return ip;
+  }
+
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
     let firstIp = forwarded.split(',')[0].trim();
@@ -88,13 +95,6 @@ export const getClientIp = (request: Request) => {
   const trueClientIp = request.headers.get('true-client-ip');
   if (trueClientIp) {
     let ip = trueClientIp.trim();
-    if (ip.startsWith('::ffff:')) ip = ip.substring(7);
-    return ip;
-  }
-
-  const clientIpHeader = request.headers.get('x-client-ip');
-  if (clientIpHeader) {
-    let ip = clientIpHeader.trim();
     if (ip.startsWith('::ffff:')) ip = ip.substring(7);
     return ip;
   }
@@ -128,6 +128,12 @@ export function registerOTel(app: Elysia) {
       const clientIp = getClientIp(request);
 
       requestCounter.add(1, {
+        method,
+        status: status.toString(),
+        path: activePath
+      });
+
+      appAccessCounter.add(1, {
         method,
         status: status.toString(),
         path: activePath
