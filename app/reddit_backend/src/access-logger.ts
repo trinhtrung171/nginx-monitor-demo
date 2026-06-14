@@ -18,11 +18,12 @@ export function registerAccessLogger(app: Elysia) {
     const activePath = route || path || new URL(request.url).pathname;
     const ip = getClientIp(request);
     const userAgent = request.headers.get('user-agent') || '';
+    const userId = request.headers.get('x-user-id') || 'anonymous';
 
     const logEntry = {
       timestamp: new Date().toISOString(),
       ip,
-      user_id: 'anonymous',
+      user_id: userId,
       method,
       path: activePath,
       status,

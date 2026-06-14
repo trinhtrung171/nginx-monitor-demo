@@ -11,49 +11,35 @@
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "sum by(ip) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [1h]))",
+          "expr": "topk(10, sum by(ip) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range])))",
           "legendFormat": "",
           "queryType": "range"
         }
       ],
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
     },
     {
       "id": 2,
-      "title": "Requests by Endpoint",
-      "type": "barchart",
+      "title": "User Journey",
+      "type": "logs",
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "sum by(path) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [1h]))",
+          "expr": "{service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\"",
           "legendFormat": "",
           "queryType": "range"
         }
       ],
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
     },
     {
       "id": 3,
-      "title": "HTTP Status Breakdown",
-      "type": "piechart",
-      "datasource": { "uid": "devshare-loki", "type": "loki" },
-      "targets": [
-        {
-          "expr": "sum by(status) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [1h]))",
-          "legendFormat": "",
-          "queryType": "range"
-        }
-      ],
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
-    },
-    {
-      "id": 4,
-      "title": "Avg Response Time by Route",
+      "title": "Avg Response Time",
       "type": "stat",
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "sum by(path) (avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [1h]))",
+          "expr": "avg(avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [$__range]))",
           "legendFormat": "",
           "queryType": "range"
         }
@@ -63,7 +49,87 @@
           "unit": "ms"
         }
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 }
+    },
+    {
+      "id": 4,
+      "title": "HTTP Method Breakdown",
+      "type": "piechart",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "sum by(method) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range]))",
+          "legendFormat": "",
+          "queryType": "range"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 }
+    },
+    {
+      "id": 5,
+      "title": "Requests by Endpoint",
+      "type": "barchart",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by(path) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range])))",
+          "legendFormat": "",
+          "queryType": "range"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 }
+    },
+    {
+      "id": 6,
+      "title": "Bandwidth per IP",
+      "type": "barchart",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by(ip) (sum_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap bytes_sent [$__range])))",
+          "legendFormat": "",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 }
+    },
+    {
+      "id": 7,
+      "title": "Status Code over Time",
+      "type": "timeseries",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "sum by(status) (count_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" [$__range]))",
+          "legendFormat": "{{status}}",
+          "queryType": "range"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+    },
+    {
+      "id": 8,
+      "title": "Response Time by Route",
+      "type": "barchart",
+      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by(path) (avg_over_time({service=\"devshare-backend\"} | json | __error__!=\"JSONParserErr\" | unwrap duration_ms [$__range])))",
+          "legendFormat": "",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
     }
   ]
 }
