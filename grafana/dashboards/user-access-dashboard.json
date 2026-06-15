@@ -324,19 +324,19 @@
           "refId": "A"
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | status >= 300 | status < 400 [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | status >= 300 | status < 400 [$__range]))",
           "legendFormat": "3xx Redirect",
           "queryType": "instant",
           "refId": "B"
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | status >= 400 | status < 500 [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | status >= 400 | status < 500 [$__range]))",
           "legendFormat": "4xx Client Error",
           "queryType": "instant",
           "refId": "C"
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | status >= 500 [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | status >= 500 [$__range]))",
           "legendFormat": "5xx Server Error",
           "queryType": "instant",
           "refId": "D"

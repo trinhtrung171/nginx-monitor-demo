@@ -8,7 +8,7 @@
       "id": 1,
       "title": "Slow Query Count",
       "type": "stat",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(sum(increase(slow_query_total[$__range])) or vector(0))",
@@ -21,7 +21,7 @@
       "id": 2,
       "title": "Query Rate",
       "type": "stat",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(sum(rate(db_queries_total[$__range])) or vector(0))",
@@ -34,7 +34,7 @@
       "id": 3,
       "title": "Avg Query Duration",
       "type": "stat",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(sum(increase(db_query_duration_milliseconds_sum[$__range])) / sum(increase(db_query_duration_milliseconds_count[$__range]))) > 0 or vector(0)",
@@ -47,7 +47,7 @@
       "id": 4,
       "title": "Queries per Request",
       "type": "stat",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(sum(rate(db_queries_total[$__range])) / sum(rate(http_server_requests_total[$__range]))) > 0 or vector(0)",
@@ -60,7 +60,7 @@
       "id": 5,
       "title": "Query Duration Over Time",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(sum(rate(db_query_duration_milliseconds_sum[$__rate_interval])) / sum(rate(db_query_duration_milliseconds_count[$__rate_interval]))) > 0 or vector(0)",
@@ -73,7 +73,7 @@
       "id": 6,
       "title": "Queries per Request Over Time",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(sum(rate(db_queries_total[$__rate_interval])) / sum(rate(http_server_requests_total[$__rate_interval]))) > 0 or vector(0)",
@@ -89,7 +89,7 @@
       "datasource": { "uid": "devshare-loki", "type": "loki" },
       "targets": [
         {
-          "expr": "{service=\"devshare-backend\"} |= \"slow_query\"",
+          "expr": "{service_name=\"devshare-backend\"} |= \"slow_query\"",
           "legendFormat": ""
         }
       ],

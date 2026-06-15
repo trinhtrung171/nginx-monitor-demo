@@ -314,30 +314,30 @@ export default function App() {
     };
   }, []);
 
-  // Log access on app mount and when the user changes (e.g. logging in)
+  // Log access on app mount (first load / reloads / new session)
   useEffect(() => {
     const logAccess = async () => {
-      const sessionKey = `ds_accessed:${user?.id || 'guest'}`;
-      if (sessionStorage.getItem(sessionKey)) return;
-
       try {
         const headers = { 'Content-Type': 'application/json' };
-        if (user?.id) {
-          headers['x-user-id'] = user.id;
-        }
-        const res = await fetch(`${API}/access-logs`, {
+        try {
+          const storedUser = localStorage.getItem('ds_user');
+          if (storedUser) {
+            const parsed = JSON.parse(storedUser);
+            if (parsed?.id) {
+              headers['x-user-id'] = parsed.id;
+            }
+          }
+        } catch {}
+        await fetch(`${API}/access-logs`, {
           method: 'POST',
           headers
         });
-        if (res.ok) {
-          sessionStorage.setItem(sessionKey, 'true');
-        }
       } catch (err) {
         console.error('Failed to log access:', err);
       }
     };
     logAccess();
-  }, [user?.id]);
+  }, []);
 
   const fetchNotifs = async () => {
     if (!user) { setNotifications([]); return; }

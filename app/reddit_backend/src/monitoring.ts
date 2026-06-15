@@ -17,7 +17,16 @@ const sdk = new NodeSDK({
   // Cấu hình đẩy dữ liệu về Grafana Cloud qua giao thức OTLP
   metricReaders: [
     new PeriodicExportingMetricReader({
-      exporter: new OTLPMetricExporter(),
+      exporter: new OTLPMetricExporter({
+        url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+          ? (process.env.OTEL_EXPORTER_OTLP_ENDPOINT.endsWith('/v1/metrics') 
+              ? process.env.OTEL_EXPORTER_OTLP_ENDPOINT 
+              : `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/metrics`)
+          : 'http://localhost:4318/v1/metrics',
+        headers: process.env.OTEL_EXPORTER_OTLP_ENDPOINT?.includes('otel-collector')
+          ? {}
+          : undefined
+      }),
     }),
   ],
 });

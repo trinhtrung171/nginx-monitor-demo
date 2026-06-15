@@ -33,7 +33,13 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
         data: {
           ip,
           userId: finalUserId,
-          userAgent: userAgent || null
+          username: finalUserId ? username : null,
+          userAgent: userAgent || null,
+          method: "GET",
+          path: "/",
+          status: 200,
+          durationMs: 0,
+          bytesSent: 0
         }
       });
 

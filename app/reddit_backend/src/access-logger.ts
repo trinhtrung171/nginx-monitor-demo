@@ -10,11 +10,11 @@ async function getUsername(userId: string): Promise<string> {
   if (cached && cached.expiresAt > Date.now()) return cached.username;
   try {
     const user = await db.user.findUnique({ where: { id: userId }, select: { username: true } });
-    const username = user?.username || userId;
+    const username = user?.username || 'anonymous';
     usernameCache.set(userId, { username, expiresAt: Date.now() + CACHE_TTL_MS });
     return username;
   } catch {
-    return userId;
+    return 'anonymous';
   }
 }
 
@@ -70,24 +70,6 @@ export function registerAccessLogger(app: Elysia) {
       };
 
       console.log(JSON.stringify(logEntry));
-
-      try {
-        await db.accessLog.create({
-          data: {
-            ip: ip || 'unknown',
-            userId: userId || null,
-            username: username !== 'anonymous' ? username : null,
-            userAgent,
-            method,
-            path: activePath,
-            status,
-            durationMs: duration_ms,
-            bytesSent: computeBytesSent(response),
-          }
-        });
-      } catch (dbErr) {
-        console.error('Failed to write access log to DB:', dbErr);
-      }
     } catch (err) {
       startTimes.delete(request);
       console.error('Failed to write access log:', err);

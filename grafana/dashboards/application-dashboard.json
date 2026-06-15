@@ -9,7 +9,7 @@
       "id": 1,
       "title": "Request/min",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(sum(increase(http_server_requests_total[$__range])) * 60 / $__range_s) or vector(0)",
@@ -29,7 +29,7 @@
       "id": 2,
       "title": "Error Rate %",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(sum(increase(http_server_requests_total{status=~\"5..\"}[$__range])) / sum(increase(http_server_requests_total[$__range])) * 100) or vector(0)",
@@ -58,7 +58,7 @@
       "id": 3,
       "title": "p95 Latency",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(histogram_quantile(0.95, sum by(le) (increase(http_server_duration_milliseconds_bucket[$__range]))) or vector(0))",
@@ -85,7 +85,7 @@
       "id": 4,
       "title": "Process CPU",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "avg(process_cpu_usage) * 100",
@@ -107,7 +107,7 @@
       "id": 5,
       "title": "Process RAM",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "avg(process_memory_usage_bytes)",
@@ -127,7 +127,7 @@
       "id": 6,
       "title": "Error Count",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "(sum(increase(app_errors_total[$__range])) or vector(0))",
@@ -147,7 +147,7 @@
       "id": 7,
       "title": "Render Uptime",
       "type": "stat",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "avg(probe_success{job=\"blackbox\", instance=\"https://nginx-monitor-demo.onrender.com/\"})",

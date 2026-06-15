@@ -8,7 +8,7 @@
       "id": 1,
       "title": "CPU Usage %",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -35,7 +35,7 @@
       "id": 2,
       "title": "RAM Usage %",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -62,7 +62,7 @@
       "id": 5,
       "title": "System Load",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "node_load1",
@@ -83,7 +83,7 @@
       "id": 3,
       "title": "Disk I/O",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "sum(rate(node_disk_read_bytes_total[1m]))",
@@ -105,7 +105,7 @@
       "id": 4,
       "title": "Net In/Out",
       "type": "timeseries",
-      "datasource": { "uid": "prometheus-local" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
           "expr": "rate(node_network_receive_bytes_total{device=\"en0\"}[1m])",

@@ -22,6 +22,7 @@
   "panels": [
     {
       "datasource": {
+        "type": "prometheus",
         "uid": "prometheus-local"
       },
       "fieldConfig": {
@@ -114,6 +115,7 @@
     },
     {
       "datasource": {
+        "type": "prometheus",
         "uid": "prometheus-local"
       },
       "fieldConfig": {
@@ -221,6 +223,7 @@
     },
     {
       "datasource": {
+        "type": "prometheus",
         "uid": "prometheus-local"
       },
       "fieldConfig": {
