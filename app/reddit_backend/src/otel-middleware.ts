@@ -1,5 +1,6 @@
 import type { Elysia } from 'elysia';
 import { metrics } from '@opentelemetry/api';
+import { recordRequest } from './prometheus-exporter';
 
 const meter = metrics.getMeter('elysia-http');
 
@@ -109,6 +110,8 @@ export function registerOTel(app: Elysia) {
         status: status.toString(),
         path: activePath
       });
+
+      recordRequest(method, status.toString(), activePath, duration);
 
       appAccessCounter.add(1, {
         method,

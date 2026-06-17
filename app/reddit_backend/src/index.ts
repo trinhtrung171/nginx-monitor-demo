@@ -9,11 +9,11 @@ import { authRoutes } from "./routes/auth";
 import { reportRoutes } from "./routes/reports";
 import { notificationRoutes } from "./routes/notifications";
 import { accessLogRoutes } from "./routes/accessLogs";
-import { db } from "./db";
 import { mkdir } from "fs/promises";
 
 import { registerOTel, setAppServer, errorCounter } from "./otel-middleware";
 import { registerAccessLogger } from "./access-logger";
+import { registerMetricsRoute, recordError } from "./prometheus-exporter";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -23,6 +23,7 @@ const app = new Elysia()
 
 registerOTel(app);
 registerAccessLogger(app);
+registerMetricsRoute(app);
 
 app.onError(({ error, request, set }) => {
   const status = set.status || 500;
@@ -31,6 +32,7 @@ app.onError(({ error, request, set }) => {
       method: request.method,
       path: new URL(request.url).pathname,
     });
+    recordError(request.method, new URL(request.url).pathname);
   }
 });
 
