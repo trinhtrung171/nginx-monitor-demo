@@ -62,29 +62,6 @@ export function setAppServer(server: any) {
 }
 
 export const getClientIp = (request: Request) => {
-  const cfConnectingIp = request.headers.get('cf-connecting-ip');
-  if (cfConnectingIp) {
-    let ip = cfConnectingIp.trim();
-    if (ip.startsWith('::ffff:')) ip = ip.substring(7);
-    return ip;
-  }
-
-  const clientIpHeader = request.headers.get('x-client-ip');
-  if (clientIpHeader) {
-    let ip = clientIpHeader.trim();
-    if (ip.startsWith('::ffff:')) ip = ip.substring(7);
-    return ip;
-  }
-
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    let firstIp = forwarded.split(',')[0].trim();
-    if (firstIp) {
-      if (firstIp.startsWith('::ffff:')) firstIp = firstIp.substring(7);
-      return firstIp;
-    }
-  }
-
   const realIp = request.headers.get('x-real-ip');
   if (realIp) {
     let ip = realIp.trim();
@@ -92,9 +69,9 @@ export const getClientIp = (request: Request) => {
     return ip;
   }
 
-  const trueClientIp = request.headers.get('true-client-ip');
-  if (trueClientIp) {
-    let ip = trueClientIp.trim();
+  const cfConnectingIp = request.headers.get('cf-connecting-ip');
+  if (cfConnectingIp) {
+    let ip = cfConnectingIp.trim();
     if (ip.startsWith('::ffff:')) ip = ip.substring(7);
     return ip;
   }

@@ -41,7 +41,8 @@ app
       return new Response(JSON.stringify({ error: "File too large. Max 50MB." }), { status: 413 });
     }
     await mkdir("public/uploads", { recursive: true });
-    const ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop() : 'png';
+    const rawExt = (file.name && file.name.includes('.')) ? file.name.split('.').pop() : 'png';
+    const ext = rawExt.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
     const filename = `${Date.now()}.${ext}`;
     await Bun.write(`public/uploads/${filename}`, file);
     const urlObj = new URL(request.url);
@@ -67,8 +68,6 @@ app
   .listen({ port: Number(process.env.PORT) || 3001, hostname: "0.0.0.0" });
 
 setAppServer(app.server);
-
-db.$connect().then(() => console.log('Database connected'));
 
 console.log(
   `DevShare API is running at ${app.server?.hostname}:${app.server?.port}`

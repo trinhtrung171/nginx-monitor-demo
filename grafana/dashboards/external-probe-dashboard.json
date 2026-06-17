@@ -279,7 +279,7 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "ms"
         },
         "overrides": []
       },
@@ -306,7 +306,7 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "probe_duration_seconds{job=\"blackbox\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox\"} * 1000",
           "legendFormat": "{{instance}}",
           "refId": "A"
         }
@@ -316,7 +316,7 @@
     }
   ],
   "preload": false,
-  "refresh": "",
+  "refresh": "30s",
   "schemaVersion": 42,
   "tags": [],
   "templating": {

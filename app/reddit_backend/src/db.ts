@@ -62,7 +62,27 @@ export const db =
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
 
-// Simple in-memory cache with TTL
+async function connectWithRetry(maxRetries = 3, baseDelay = 1000): Promise<void> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await db.$connect();
+      return;
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      console.log(`DB connect attempt ${attempt} failed, retrying in ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+}
+
+connectWithRetry().then(() => console.log('Database connected')).catch(err => {
+  console.error('Failed to connect to database after retries:', err);
+  process.exit(1);
+});
+
+// Simple in-memory cache with TTL and max size
+const CACHE_MAX_SIZE = 500;
 const cache = new Map<string, { data: any; expires: number }>();
 export function getCached<T>(key: string): T | null {
   const entry = cache.get(key);
@@ -70,6 +90,10 @@ export function getCached<T>(key: string): T | null {
   return entry.data as T;
 }
 export function setCache(key: string, data: any, ttlMs = 15000) {
+  if (cache.size >= CACHE_MAX_SIZE) {
+    const oldest = cache.keys().next().value;
+    if (oldest) cache.delete(oldest);
+  }
   cache.set(key, { data, expires: Date.now() + ttlMs });
 }
 export function invalidateCache(prefix: string) {

@@ -22,8 +22,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
+        "type": "grafana-postgresql-datasource",
+        "uid": "devshare-postgres"
       },
       "fieldConfig": {
         "defaults": {
@@ -101,25 +101,41 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "topk(10, sum by(ip) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" [$__range])))",
-          "legendFormat": "__auto",
-          "queryType": "instant",
-          "refId": "A"
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \"ip\" AS \"IP Address\", COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\nGROUP BY \"ip\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "Top 10 IP Addresses",
-      "type": "table",
-      "transformations": [
-        {
-          "id": "labelsToFields",
-          "options": {}
-        }
-      ]
+      "type": "table"
     },
     {
       "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
+        "type": "grafana-postgresql-datasource",
+        "uid": "devshare-postgres"
       },
       "fieldConfig": {
         "defaults": {
@@ -201,12 +217,32 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "direction": "backward",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
           "editorMode": "code",
-          "expr": "sum(rate({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" [1m]))",
-          "legendFormat": "req/s",
-          "queryType": "range",
-          "refId": "A"
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\", '1m') AS \"time\",\n  COUNT(*)::float / 60.0 AS \"req/s\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\nGROUP BY \"time\"\nORDER BY \"time\";",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "Request Rate (req/s)",
@@ -214,8 +250,8 @@
     },
     {
       "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
+        "type": "grafana-postgresql-datasource",
+        "uid": "devshare-postgres"
       },
       "fieldConfig": {
         "defaults": {
@@ -318,28 +354,116 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | status >= 200 | status < 300 [$__range]))",
-          "legendFormat": "2xx Success",
-          "queryType": "instant",
-          "refId": "A"
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"status\" >= 200 AND \"status\" < 300;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | status >= 300 | status < 400 [$__range]))",
-          "legendFormat": "3xx Redirect",
-          "queryType": "instant",
-          "refId": "B"
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"status\" >= 300 AND \"status\" < 400;",
+          "refId": "B",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | status >= 400 | status < 500 [$__range]))",
-          "legendFormat": "4xx Client Error",
-          "queryType": "instant",
-          "refId": "C"
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"status\" >= 400 AND \"status\" < 500;",
+          "refId": "C",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         },
         {
-          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | status >= 500 [$__range]))",
-          "legendFormat": "5xx Server Error",
-          "queryType": "instant",
-          "refId": "D"
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"status\" >= 500;",
+          "refId": "D",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "HTTP Status Distribution",
@@ -347,8 +471,8 @@
     },
     {
       "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
+        "type": "grafana-postgresql-datasource",
+        "uid": "devshare-postgres"
       },
       "fieldConfig": {
         "defaults": {
@@ -380,44 +504,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #A"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Requests"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "method"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Method"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "path"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Path"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -433,22 +520,36 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "direction": "backward",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
           "editorMode": "code",
-          "expr": "topk(10, sum by(method, path) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" [$__range])))",
-          "legendFormat": "{{method}} {{path}}",
-          "queryType": "instant",
-          "refId": "A"
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  \"method\" AS \"Method\",\n  \"path\" AS \"Path\",\n  COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"method\" IS NOT NULL\n  AND \"path\" IS NOT NULL\nGROUP BY \"method\", \"path\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "Most Called Endpoints",
-      "type": "table",
-      "transformations": [
-        {
-          "id": "labelsToFields",
-          "options": {}
-        }
-      ]
+      "type": "table"
     },
     {
       "datasource": {
@@ -479,7 +580,7 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | line_format \"{{.timestamp}} | {{.ip}} | {{.username}} | {{.method}} {{.path}} → {{.status}} ({{.duration_ms}}ms)\"",
+          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | username != \"anonymous\" | line_format \"{{.timestamp}} | {{.ip}} | {{.username}} | {{.method}} {{.path}} -> {{.status}} ({{.duration_ms}}ms)\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -490,8 +591,8 @@
     },
     {
       "datasource": {
-        "type": "loki",
-        "uid": "devshare-loki"
+        "type": "grafana-postgresql-datasource",
+        "uid": "devshare-postgres"
       },
       "fieldConfig": {
         "defaults": {
@@ -525,23 +626,19 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Value #A"
+              "options": "Bytes Sent"
             },
             "properties": [
               {
                 "id": "custom.width",
                 "value": 160
-              },
-              {
-                "id": "displayName",
-                "value": "Bytes Sent"
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 24,
         "x": 0,
         "y": 19
@@ -554,10 +651,32 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "topk(10, sum by(ip) (sum_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | unwrap bytes_sent [$__range])))",
-          "legendFormat": "__auto",
-          "queryType": "instant",
-          "refId": "A"
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  \"ip\" AS \"IP Address\",\n  SUM(\"bytesSent\")::bigint AS \"Bytes Sent\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"bytesSent\" IS NOT NULL\nGROUP BY \"ip\"\nORDER BY \"Bytes Sent\" DESC\nLIMIT 10;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "Bandwidth per IP (bytes sent)",
@@ -569,49 +688,27 @@
         "uid": "devshare-postgres"
       },
       "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "left",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
+        "defaults": {},
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 25
       },
-      "id": 7,
+      "id": 10,
       "options": {
         "cellHeight": "sm",
-        "showHeader": true
+        "showHeader": true,
+        "footer": {
+          "reducers": [],
+          "show": false
+        }
       },
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "dataset": "neondb",
           "datasource": {
             "type": "grafana-postgresql-datasource",
             "uid": "devshare-postgres"
@@ -619,7 +716,64 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  al.\"createdAt\",\n  al.\"ip\",\n  COALESCE(al.\"username\", 'Guest') AS \"Username\",\n  al.\"method\",\n  al.\"path\",\n  al.\"status\",\n  al.\"durationMs\" AS \"Duration (ms)\",\n  al.\"bytesSent\" AS \"Bytes Sent\"\nFROM \"AccessLog\" al\nWHERE al.\"method\" IS NOT NULL\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;\n",
+          "rawSql": "SELECT\n  \"createdAt\",\n  \"ip\" AS \"IP\",\n  COALESCE(\"username\", 'Guest') AS \"Username\",\n  \"method\",\n  \"path\",\n  \"status\",\n  \"durationMs\" AS \"Duration (ms)\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"durationMs\" > 500\n  AND \"method\" IS NOT NULL\nORDER BY \"createdAt\" DESC\nLIMIT 200;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Slow Requests (>500ms)",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devshare-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": {
+          "reducers": [],
+          "show": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devshare-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  al.\"createdAt\" AS \"Access Time\",\n  al.\"ip\" AS \"IP Address\",\n  COALESCE(al.\"username\", 'Guest') AS \"Username\",\n  al.\"userAgent\" AS \"Device\"\nFROM \"AccessLog\" al\nWHERE al.\"username\" IS NOT NULL\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -648,9 +802,9 @@
   "refresh": "30s",
   "schemaVersion": 42,
   "tags": [
-    "loki",
     "access-log",
-    "user"
+    "user",
+    "postgresql"
   ],
   "templating": {
     "list": []
@@ -663,6 +817,6 @@
   "timezone": "browser",
   "title": "User Access Logs",
   "uid": "user-access-dashboard",
-  "version": 36,
+  "version": 38,
   "weekStart": ""
 }

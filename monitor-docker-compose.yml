@@ -13,6 +13,25 @@ services:
       - global-monitor-net
     restart: unless-stopped
 
+  # Node Exporter: Collect system metrics (CPU, RAM, disk) from the host
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "9100:9100"
+    networks:
+      - global-monitor-net
+    restart: unless-stopped
+
   # 3. Prometheus: Lưu trữ dữ liệu
   prometheus:
     image: prom/prometheus:latest
@@ -70,6 +89,7 @@ services:
     user: root
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Đọc log trực tiếp từ Docker Engine
+      - ./nginx_logs:/var/log/nginx:ro # Mount nginx logs for parsing JSON access logs
       - ./promtail-config.yml:/etc/promtail/config.yml
     command: -config.file=/etc/promtail/config.yml
     networks:
@@ -99,7 +119,17 @@ services:
       - alertmanager_data:/alertmanager
     ports:
       - "9093:9093"
-    entrypoint: sh -c 'sed "s/\$${SMTP_USERNAME}/$SMTP_USERNAME/g; s/\$${SMTP_PASSWORD}/$SMTP_PASSWORD/g; s/\$${SMTP_FROM}/$SMTP_FROM/g; s/\$${SMTP_TO}/$SMTP_TO/g" /etc/alertmanager/alertmanager.yml > /tmp/alertmanager-config.yml && /bin/alertmanager --config.file=/tmp/alertmanager-config.yml --storage.path=/alertmanager'
+    entrypoint: >
+      sh -c '
+        cp /etc/alertmanager/alertmanager.yml /tmp/alertmanager-config.yml &&
+        export SMTP_USERNAME SMTP_PASSWORD SMTP_FROM SMTP_TO &&
+        for var in SMTP_USERNAME SMTP_PASSWORD SMTP_FROM SMTP_TO; do
+          eval val=\$$var
+          val_escaped=$(echo "$val" | sed "s|[&/\\]|\\\\&|g")
+          sed -i "s|\$${var}|$val_escaped|g" /tmp/alertmanager-config.yml
+        done &&
+        /bin/alertmanager --config.file=/tmp/alertmanager-config.yml --storage.path=/alertmanager
+      '
     networks:
       - global-monitor-net
     restart: unless-stopped

@@ -42,10 +42,16 @@ scrape_configs:
         replacement: "${1}:${2}"
         target_label: __address__
 
+  # Direct scrape for nginx-exporter as backup (if docker socket unavailable)
+  - job_name: 'nginx-direct'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    metrics_path: '/metrics'
+
   # 3. Giám sát tài nguyên máy chủ (Host Machine) qua Node Exporter
   - job_name: 'node'
     static_configs:
-      - targets: ['host.docker.internal:9100']
+      - targets: ['node-exporter:9100']
 
   # Blackbox exporter: probe các endpoint bên ngoài (ví dụ: ứng dụng Vercel)
   - job_name: 'blackbox'

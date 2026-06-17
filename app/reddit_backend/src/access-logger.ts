@@ -60,6 +60,7 @@ export function registerAccessLogger(app: Elysia) {
       const logEntry = {
         timestamp: new Date().toISOString(),
         ip,
+        user_id: userId || null, // Include user_id field for Loki queries
         username,
         method,
         path: activePath,

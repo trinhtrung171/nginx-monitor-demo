@@ -4,10 +4,12 @@ services:
     image: ${DOCKERHUB_USERNAME}/nginx-monitor:latest
     container_name: nginx-server
     ports:
-      - "8080:80" # Truy cập web tại localhost:8080
+      - "8080:80"
+      - "5432:5432"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./app/reddit_frontend/dist:/usr/share/nginx/html
+      - ./nginx_logs:/var/log/nginx # Mount nginx logs for Promtail to read
     networks:
       - global-monitor-net
     restart: unless-stopped
@@ -20,11 +22,12 @@ services:
       - -nginx.scrape-uri=http://nginx:80/stub_status
       - -web.telemetry-path=/metrics
       - -nginx.timeout=5s
+    ports:
+      - "9113:9113" # Expose port for Prometheus scraping
     networks:
       - global-monitor-net
     depends_on:
       - nginx
-    # --- THÊM PHẦN NÀY ---
     labels:
       - "prometheus.monitor=true"
       - "prometheus.scrape_port=9113"

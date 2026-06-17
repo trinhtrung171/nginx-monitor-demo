@@ -22,7 +22,7 @@ services:
     ports:
       - "3001:3001"
     environment:
-      DATABASE_URL: "postgresql://neondb_owner:npg_VvfZKuCIz07J@ep-blue-waterfall-apb84geu.c-7.us-east-1.aws.neon.tech:5432/neondb?sslmode=require"
+      DATABASE_URL: ${DATABASE_URL}
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
       OTEL_SERVICE_NAME: "devshare-backend"
       PUBLIC_URL: "http://localhost:8080"

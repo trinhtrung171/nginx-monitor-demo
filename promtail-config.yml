@@ -26,3 +26,60 @@ scrape_configs:
         regex: '(.{12})'
         replacement: '${1}'
         target_label: 'container_id'
+    pipeline_stages:
+      # Decode Docker log format (extract log content from JSON envelope)
+      - docker: {}
+      
+      # Parse JSON log lines from backend
+      - json:
+          expressions:
+            timestamp: timestamp
+            ip: ip
+            user_id: user_id
+            username: username
+            method: method
+            path: path
+            status: status
+            duration_ms: duration_ms
+            bytes_sent: bytes_sent
+            user_agent: user_agent
+      
+      # Map extracted fields to Loki labels for querying
+      - labels:
+          ip:
+          user_id:
+          username:
+          method:
+          status:
+          type:
+
+  # Scrape nginx JSON access logs from mounted volume
+  - job_name: nginx_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          __path__: /var/log/nginx/*.log
+    pipeline_stages:
+      # Parse JSON log lines from nginx
+      - json:
+          expressions:
+            timestamp: timestamp
+            ip: ip
+            method: method
+            path: path
+            status: status
+            duration_ms: duration_ms
+            bytes_sent: bytes_sent
+            user_agent: user_agent
+            http_version: http_version
+            upstream_addr: upstream_addr
+      
+      # Map extracted fields to Loki labels
+      - labels:
+          ip:
+          method:
+          status:
+          job:
+
