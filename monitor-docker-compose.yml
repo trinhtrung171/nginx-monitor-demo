@@ -116,19 +116,11 @@ services:
       - SMTP_TO=${SMTP_TO}
     volumes:
       - ./alertmanager:/etc/alertmanager
+      - ./alertmanager/entrypoint.sh:/entrypoint.sh:ro
       - alertmanager_data:/alertmanager
     ports:
       - "9093:9093"
-    entrypoint: >
-      sh -c '
-        cp /etc/alertmanager/alertmanager.yml /tmp/alertmanager-config.yml &&
-        for var in SMTP_USERNAME SMTP_PASSWORD SMTP_FROM SMTP_TO; do
-          eval val=\$$var
-          val_escaped=$(echo "$val" | sed 's|[&/\]|\\&|g')
-          sed -i "s|\${$var}|$val_escaped|g" /tmp/alertmanager-config.yml
-        done &&
-        /bin/alertmanager --config.file=/tmp/alertmanager-config.yml --storage.path=/alertmanager
-      '
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     networks:
       - global-monitor-net
     restart: unless-stopped
