@@ -20,7 +20,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "rpm",
-          "color": { "mode": "fixed" },
+          "color": { "mode": "palette-classic" },
           "custom": { "lineWidth": 2, "fillOpacity": 20 }
         }
       },
@@ -42,7 +42,7 @@
           "unit": "percent",
           "min": 0,
           "max": 100,
-          "color": { "mode": "fixed" },
+          "color": { "mode": "palette-classic" },
           "custom": { "lineWidth": 2, "fillOpacity": 20 },
           "thresholds": {
             "steps": [
@@ -177,11 +177,11 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "nginx_connections_active",
+          "expr": "nginx_connections_active{job=\"nginx\"}",
           "legendFormat": "Active"
         },
         {
-          "expr": "nginx_connections_waiting",
+          "expr": "nginx_connections_waiting{job=\"nginx\"}",
           "legendFormat": "Waiting"
         }
       ],
@@ -208,7 +208,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "rate(nginx_http_requests_total[1m])",
+          "expr": "rate(nginx_http_requests_total{job=\"nginx\"}[1m])",
           "legendFormat": "req/s"
         }
       ],

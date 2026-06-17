@@ -14,7 +14,7 @@ exporters:
     endpoint: 0.0.0.0:8889
     resource_to_telemetry_conversion:
       enabled: true
-    add_metric_suffixes: false
+    add_metric_suffixes: true
 
 service:
   pipelines:

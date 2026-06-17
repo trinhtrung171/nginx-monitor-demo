@@ -43,6 +43,7 @@ scrape_configs:
             duration_ms: duration_ms
             bytes_sent: bytes_sent
             user_agent: user_agent
+            type: type
       
       # Map extracted fields to Loki labels for querying
       - labels:

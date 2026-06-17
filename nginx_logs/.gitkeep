@@ -1,2 +1,0 @@
-# This directory will contain nginx access logs
-# Mounted from docker-compose.yml for Promtail to read

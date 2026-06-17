@@ -756,6 +756,7 @@
         "y": 32
       },
       "id": 7,
+      "pluginVersion": "12.4.1",
       "options": {
         "cellHeight": "sm",
         "showHeader": true,
@@ -773,7 +774,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  al.\"createdAt\" AS \"Access Time\",\n  al.\"ip\" AS \"IP Address\",\n  COALESCE(al.\"username\", 'Guest') AS \"Username\",\n  al.\"userAgent\" AS \"Device\"\nFROM \"AccessLog\" al\nWHERE al.\"username\" IS NOT NULL\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;",
+          "rawSql": "SELECT\n  al.\"createdAt\" AS \"Access Time\",\n  al.\"ip\" AS \"IP Address\",\n  COALESCE(al.\"username\", 'Guest') AS \"Username\",\n  al.\"userAgent\" AS \"Device\"\nFROM \"AccessLog\" al\nWHERE $__timeFilter(al.\"createdAt\")\n  AND al.\"username\" IS NOT NULL\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;",
           "refId": "A",
           "sql": {
             "columns": [

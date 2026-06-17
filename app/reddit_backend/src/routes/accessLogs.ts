@@ -18,6 +18,14 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+// Periodically purge stale entries to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitStore) {
+    if (now > entry.resetAt) rateLimitStore.delete(ip);
+  }
+}, 5 * 60_000);
+
 export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
   // POST /access-logs - Record a new access log when the app is opened
   .post("/", async ({ request, headers, set }) => {

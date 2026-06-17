@@ -54,7 +54,7 @@
       },
       "targets": [
         {
-          "expr": "(node_memory_active_bytes + node_memory_wired_bytes) / node_memory_total_bytes * 100",
+          "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",
           "legendFormat": "RAM"
         }
       ],
@@ -110,11 +110,11 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{device=\"en0\"}[1m])",
+          "expr": "rate(node_network_receive_bytes_total{device=~\"eth0|en0|ens.*|enp.*\"}[1m])",
           "legendFormat": "In"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{device=\"en0\"}[1m])",
+          "expr": "rate(node_network_transmit_bytes_total{device=~\"eth0|en0|ens.*|enp.*\"}[1m])",
           "legendFormat": "Out"
         }
       ],
