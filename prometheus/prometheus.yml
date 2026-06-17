@@ -69,10 +69,10 @@ scrape_configs:
       - targets: ['otel-collector:8889']
 
 rule_files:
-  - "alert_rules.yml"
-  - "app_rules.yml"
-  - "blackbox_rules.yml"
-  - "ssl_rules.yml"
+  - "rules/alert_rules.yml"
+  - "rules/app_rules.yml"
+  - "rules/blackbox_rules.yml"
+  - "rules/ssl_rules.yml"
 
 alerting:
   alertmanagers:

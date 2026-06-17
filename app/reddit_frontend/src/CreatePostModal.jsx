@@ -1,19 +1,12 @@
 import React, { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { X, Image as ImageIcon, Video, Link as LinkIcon, FileText, Bold, Italic, Code, Hash, Quote, List, Minus, Plus, Trash2, Eye } from 'lucide-react'
+import { X, Image as ImageIcon, Video, Link as LinkIcon, FileText, Bold, Italic, Code, Hash, Quote, List, Minus, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 import MarkdownRenderer from './MarkdownRenderer'
+import AttachmentThumb from './components/AttachmentThumb'
+import { insertAtCursor } from './lib/markdown-utils'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-
-// Markdown toolbar helper
-function insertAtCursor(textarea, before, after = '', defaultText = '') {
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
-  const selected = textarea.value.slice(start, end) || defaultText
-  const newText = textarea.value.slice(0, start) + before + selected + after + textarea.value.slice(end)
-  return { value: newText, cursor: start + before.length + selected.length + after.length }
-}
 
 export default function CreatePostModal({ subreddits, joinedSubs, user, onClose, onSuccess }) {
   const [newPost, setNewPost] = useState({ title: '', content: '', subredditId: '' })
@@ -97,22 +90,6 @@ export default function CreatePostModal({ subreddits, joinedSubs, user, onClose,
     finally { setSubmitting(false) }
   }
 
-  const AttachmentThumb = ({ att, i }) => {
-    const isImage = att.type === 'IMAGE'
-    const isVideo = att.type === 'VIDEO'
-    return (
-      <div className="att-preview-chip">
-        {isImage && <img src={att.url} alt="" className="att-thumb" />}
-        {isVideo && <video src={att.url} className="att-thumb" muted />}
-        {!isImage && !isVideo && (
-          <div className="att-chip-icon">{att.type === 'LINK' ? <LinkIcon size={14}/> : <FileText size={14}/>}</div>
-        )}
-        <span className="att-chip-name">{att.name?.split('/').pop()?.slice(0, 24) || att.type}</span>
-        <button className="att-chip-remove" onClick={() => removeAttachment(i)}><X size={12}/></button>
-      </div>
-    )
-  }
-
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <motion.div
@@ -188,7 +165,7 @@ export default function CreatePostModal({ subreddits, joinedSubs, user, onClose,
           {/* Attachments preview strip */}
           {attachments.length > 0 && (
             <div className="att-preview-strip">
-              {attachments.map((att, i) => <AttachmentThumb key={i} att={att} i={i} />)}
+              {attachments.map((att, i) => <AttachmentThumb key={i} att={att} i={i} onRemove={removeAttachment} />)}
             </div>
           )}
 

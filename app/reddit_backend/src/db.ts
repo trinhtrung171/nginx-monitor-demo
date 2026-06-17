@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
 import { metrics } from '@opentelemetry/api';
+import { adapter } from './db/pool.ts';
 
 const meter = metrics.getMeter('app-db');
 const slowQueryCounter = meter.createCounter('slow_query_total', {
@@ -20,15 +19,6 @@ queriesTotal.add(0);
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
-
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({
-  connectionString,
-  max: 10,              // max connections in pool
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
-const adapter = new PrismaPg(pool);
 
 export const db =
   globalForPrisma.prisma ??

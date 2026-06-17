@@ -11,9 +11,12 @@ import { notificationRoutes } from "./routes/notifications";
 import { accessLogRoutes } from "./routes/accessLogs";
 import { db } from "./db";
 import { mkdir } from "fs/promises";
+import { setupMtlsCerts } from "./startup/certs.ts";
 
 import { registerOTel, setAppServer, errorCounter } from "./otel-middleware";
 import { registerAccessLogger } from "./access-logger";
+
+setupMtlsCerts();
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 

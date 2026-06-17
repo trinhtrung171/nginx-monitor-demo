@@ -6,7 +6,7 @@ services:
     ports:
       - "8080:80" # Truy cập web tại localhost:8080
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./app/reddit_frontend/dist:/usr/share/nginx/html
     networks:
       - global-monitor-net

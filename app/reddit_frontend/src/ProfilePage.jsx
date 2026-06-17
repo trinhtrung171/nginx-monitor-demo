@@ -8,17 +8,7 @@ import { useAuth } from './AuthContext'
 import toast from 'react-hot-toast'
 import MediaRenderer from './MediaRenderer'
 import MarkdownRenderer from './MarkdownRenderer'
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-const timeAgo = (d) => {
-  const diff = Date.now() - new Date(d).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1) return 'just now'
-  if (m < 60) return `${m}m ago`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  return `${Math.floor(h / 24)}d ago`
-}
+import { API, timeAgo } from './lib/utils'
 
 const AVATAR_COLORS = [
   '#5C7CFA','#7950F2','#F06595','#FF6B6B','#FCC419',

@@ -1,5 +1,9 @@
 import { Elysia, t } from "elysia";
 import { db, getCached, setCache, invalidateCache } from "../db";
+import { requireAuth } from "../lib/auth-check.ts";
+import { unauthorized, notFound, forbidden } from "../lib/response.ts";
+import { addModeratorOp, removeModeratorOp } from "../lib/mod-handler.ts";
+import { listMembers } from "../lib/member-handler.ts";
 
 export const subredditRoutes = new Elysia({ prefix: "/subreddits" })
   .get("/", async () => {
@@ -37,7 +41,7 @@ export const subredditRoutes = new Elysia({ prefix: "/subreddits" })
     });
     if (!subreddit) {
       set.status = 404;
-      return { error: "Subreddit not found" };
+      return notFound("Subreddit");
     }
     return subreddit;
   })
@@ -47,11 +51,10 @@ export const subredditRoutes = new Elysia({ prefix: "/subreddits" })
       where: { name },
       include: { moderators: { select: { id: true, username: true, avatarColor: true, avatarUrl: true } } }
     });
-    if (!sub) { set.status = 404; return { error: "Subreddit not found" }; }
+    if (!sub) { set.status = 404; return notFound("Subreddit"); }
     return sub.moderators;
   })
 
-  // GET members - list subscribers with roles
   .get("/:name/members", async ({ params: { name }, set }) => {
     const sub = await db.subreddit.findUnique({
       where: { name },
@@ -65,26 +68,16 @@ export const subredditRoutes = new Elysia({ prefix: "/subreddits" })
         }
       }
     });
-    if (!sub) { set.status = 404; return { error: "Subreddit not found" }; }
+    if (!sub) { set.status = 404; return notFound("Subreddit"); }
 
-    const modIds = new Set(sub.moderators.map(m => m.id));
-    const members = sub.subscribers.map(s => ({
-      ...s.user,
-      role: s.user.id === sub.creator?.id ? 'OWNER' : modIds.has(s.user.id) ? 'MODERATOR' : 'MEMBER',
-      joinedAt: s.createdAt
-    }));
-    // Ensure creator is always first
-    members.sort((a, b) => a.role === 'OWNER' ? -1 : b.role === 'OWNER' ? 1 : 0);
-    return members;
+    return listMembers(db, sub as any);
   })
 
-  // PATCH update community settings (creator/admin only)
   .patch("/:name", async ({ params: { name }, body, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
-    const user = await db.user.findUnique({ where: { id: userId } });
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
     const sub = await db.subreddit.findUnique({ where: { name } });
-    if (!sub || !user) { set.status = 404; return { error: "Not found" }; }
+    if (!sub) { set.status = 404; return notFound("Subreddit"); }
     if (sub.creatorId !== user.id && user.role !== "ADMIN") {
       set.status = 403; return { error: "Only the creator or an admin can update community settings" };
     }
@@ -106,10 +99,8 @@ export const subredditRoutes = new Elysia({ prefix: "/subreddits" })
   })
 
   .post("/", async ({ body, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
-    const user = await db.user.findUnique({ where: { id: userId } });
-    if (!user) { set.status = 401; return { error: "User not found" }; }
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
 
     try {
       const subreddit = await db.subreddit.create({
@@ -138,38 +129,28 @@ export const subredditRoutes = new Elysia({ prefix: "/subreddits" })
     })
   })
 
-  // POST add moderator (creator or admin only)
   .post("/:name/moderators", async ({ params: { name }, body, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
-    const user = await db.user.findUnique({ where: { id: userId } });
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
     const sub = await db.subreddit.findUnique({ where: { name }, include: { creator: true } });
-    if (!sub || !user) { set.status = 404; return { error: "Not found" }; }
+    if (!sub) { set.status = 404; return notFound("Subreddit"); }
     if (sub.creatorId !== user.id && user.role !== "ADMIN") {
       set.status = 403; return { error: "Only the creator or an admin can add moderators" };
     }
-    const target = await db.user.findUnique({ where: { id: body.userId } });
-    if (!target) { set.status = 404; return { error: "User not found" }; }
 
-    try {
-      await db.subreddit.update({
-        where: { id: sub.id },
-        data: { moderators: { connect: { id: target.id } } }
-      });
-      invalidateCache('subs:');
-      return { message: `u/${target.username} added as moderator` };
-    } catch { set.status = 500; return { error: "Failed to add moderator" }; }
+    const target = await addModeratorOp(db, invalidateCache, sub.id, body.userId);
+    if (!target) { set.status = 404; return notFound("User"); }
+
+    return { message: `u/${target.username} added as moderator` };
   }, {
     body: t.Object({ userId: t.String() })
   })
 
-  // DELETE remove moderator (creator or admin only)
   .delete("/:name/moderators/:userId", async ({ params: { name, userId: targetId }, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
-    const user = await db.user.findUnique({ where: { id: userId } });
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
     const sub = await db.subreddit.findUnique({ where: { name } });
-    if (!sub || !user) { set.status = 404; return { error: "Not found" }; }
+    if (!sub) { set.status = 404; return notFound("Subreddit"); }
     if (sub.creatorId !== user.id && user.role !== "ADMIN") {
       set.status = 403; return { error: "Only the creator or an admin can remove moderators" };
     }
@@ -178,25 +159,19 @@ export const subredditRoutes = new Elysia({ prefix: "/subreddits" })
     }
 
     try {
-      await db.subreddit.update({
-        where: { id: sub.id },
-        data: { moderators: { disconnect: { id: targetId } } }
-      });
-      invalidateCache('subs:');
+      await removeModeratorOp(db, invalidateCache, sub.id, targetId);
       return { message: "Moderator removed" };
     } catch { set.status = 500; return { error: "Failed to remove moderator" }; }
   })
 
-  // DELETE a subreddit (Admin or creator only)
   .delete("/:name", async ({ params: { name }, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
-    const user = await db.user.findUnique({ where: { id: userId } });
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
     const sub = await db.subreddit.findUnique({ where: { name } });
-    if (!sub || !user) { set.status = 404; return { error: "Not found" }; }
+    if (!sub) { set.status = 404; return notFound("Subreddit"); }
 
     if (user.role !== "ADMIN" && sub.creatorId !== user.id) {
-      set.status = 403; return { error: "Forbidden" };
+      set.status = 403; return forbidden();
     }
 
     try {
@@ -211,28 +186,26 @@ export const subredditRoutes = new Elysia({ prefix: "/subreddits" })
     }
   })
 
-  // POST join/leave a subreddit
   .post("/:name/join", async ({ params: { name }, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
 
-    const user = await db.user.findUnique({ where: { id: userId } });
     const sub = await db.subreddit.findUnique({ where: { name } });
-    if (!sub || !user) { set.status = 404; return { error: "Not found" }; }
+    if (!sub) { set.status = 404; return notFound("Subreddit"); }
 
     try {
       const existing = await db.subscription.findUnique({
-        where: { userId_subredditId: { userId, subredditId: sub.id } }
+        where: { userId_subredditId: { userId: user.id, subredditId: sub.id } }
       });
 
       if (existing) {
         await db.subscription.delete({
-          where: { userId_subredditId: { userId, subredditId: sub.id } }
+          where: { userId_subredditId: { userId: user.id, subredditId: sub.id } }
         });
         return { action: "left" };
       } else {
         await db.subscription.create({
-          data: { userId, subredditId: sub.id }
+          data: { userId: user.id, subredditId: sub.id }
         });
         return { action: "joined" };
       }

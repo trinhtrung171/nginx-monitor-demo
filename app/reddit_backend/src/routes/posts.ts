@@ -1,52 +1,12 @@
 import { Elysia, t } from "elysia";
 import { db, getCached, setCache, invalidateCache } from "../db";
-
-async function fetchLinkPreview(url: string) {
-  const platform = detectPlatform(url);
-  if (platform?.embedHtml) {
-    return { url, ...platform };
-  }
-
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevShareBot/1.0)' }, signal: AbortSignal.timeout(4000) });
-    const html = await res.text();
-    const getMeta = (prop: string) => {
-      const match = html.match(new RegExp(`<meta\\s+(?:property|name)=["']${prop}["']\\s+content=["']([^"']+)["']`, 'i')) ||
-                    html.match(new RegExp(`<meta\\s+content=["']([^"']+)["']\\s+(?:property|name)=["']${prop}["']`, 'i'));
-      return match ? match[1] : null;
-    };
-    const title = getMeta('og:title') || getMeta('twitter:title') || html.match(/<title>([^<]+)<\/title>/i)?.[1];
-    const description = getMeta('og:description') || getMeta('twitter:description') || getMeta('description');
-    const image = getMeta('og:image') || getMeta('twitter:image');
-    const siteName = getMeta('og:site_name') || getMeta('al:android:app_name') || '';
-
-    if (title || description || image) {
-      return { url, platform: platform?.id || 'website', title, description, image, siteName };
-    }
-  } catch {}
-  return { url, platform: 'website', title: url };
-}
-
-function detectPlatform(url: string) {
-  const u = url.toLowerCase();
-  // YouTube
-  const ytMatch = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-z0-9_-]{11})/);
-  if (ytMatch) {
-    return { id: 'youtube', videoId: ytMatch[1], embedHtml: true };
-  }
-  // Twitter / X
-  if (u.includes('twitter.com') || u.includes('x.com')) {
-    return { id: 'twitter', embedHtml: true };
-  }
-  // Facebook
-  if (u.includes('facebook.com') || u.includes('fb.com')) {
-    return { id: 'facebook', embedHtml: true };
-  }
-  return null;
-}
+import { fetchLinkPreview } from "../lib/link-preview.ts";
+import { handleVote } from "../lib/vote-handler.ts";
+import { toggleBookmark } from "../lib/bookmark-handler.ts";
+import { requireAuth } from "../lib/auth-check.ts";
+import { unauthorized, notFound, forbidden } from "../lib/response.ts";
 
 export const postRoutes = new Elysia({ prefix: "/posts" })
-  // GET all posts
   .get("/", async () => {
     const cached = getCached<any>('posts:all');
     if (cached) return cached;
@@ -74,12 +34,11 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     return data;
   })
 
-  // GET saved/bookmarked posts for current user (before :id to avoid route conflict)
   .get("/saved", async ({ headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
     const bookmarks = await db.bookmark.findMany({
-      where: { userId },
+      where: { userId: user.id },
       include: {
         post: {
           include: {
@@ -96,7 +55,6 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     return bookmarks.map(b => b.post);
   })
 
-  // GET single post with full comments tree
   .get("/:id", async ({ params: { id }, set }) => {
     const post = await db.post.findUnique({
       where: { id },
@@ -133,17 +91,14 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     });
     if (!post) {
       set.status = 404;
-      return { error: "Post not found" };
+      return notFound("Post");
     }
     return post;
   })
 
-  // POST create post
   .post("/", async ({ body, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
-    const user = await db.user.findUnique({ where: { id: userId } });
-    if (!user) { set.status = 401; return { error: "User not found" }; }
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
 
     const subreddit = await db.subreddit.findUnique({ where: { id: body.subredditId } });
     if (!subreddit) { set.status = 400; return { error: "Subreddit not found" }; }
@@ -185,7 +140,6 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         }
       });
 
-      // Create notifications for subscribers
       const subscribers = await db.subscription.findMany({
         where: { subredditId: body.subredditId, userId: { not: user.id } }
       });
@@ -221,40 +175,18 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     })
   })
 
-  // POST vote on a post
   .post("/:id/vote", async ({ params: { id }, body, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
-    const user = await db.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      set.status = 401;
-      return { error: "User not found" };
-    }
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
 
     const post = await db.post.findUnique({ where: { id } });
     if (!post) {
       set.status = 404;
-      return { error: "Post not found" };
+      return notFound("Post");
     }
 
     try {
-      const existing = await db.vote.findUnique({
-        where: { userId_postId: { userId: user.id, postId: id } }
-      });
-
-      if (existing && existing.type === body.type) {
-        await db.vote.delete({ where: { userId_postId: { userId: user.id, postId: id } } });
-        invalidateCache('posts:');
-        return { action: "removed" };
-      }
-
-      const vote = await db.vote.upsert({
-        where: { userId_postId: { userId: user.id, postId: id } },
-        update: { type: body.type },
-        create: { type: body.type, userId: user.id, postId: id }
-      });
-      invalidateCache('posts:');
-      return vote;
+      return await handleVote(user.id, id, body.type, 'post');
     } catch (e) {
       console.error(e);
       set.status = 400;
@@ -266,32 +198,15 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     })
   })
 
-  // POST toggle save/unbookmark a post
   .post("/:id/save", async ({ params: { id }, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
 
     const post = await db.post.findUnique({ where: { id } });
-    if (!post) { set.status = 404; return { error: "Post not found" }; }
+    if (!post) { set.status = 404; return notFound("Post"); }
 
     try {
-      const existing = await db.bookmark.findUnique({
-        where: { userId_postId: { userId, postId: id } }
-      });
-
-      if (existing) {
-        await db.bookmark.delete({
-          where: { userId_postId: { userId, postId: id } }
-        });
-        invalidateCache('posts:');
-        return { saved: false };
-      } else {
-        await db.bookmark.create({
-          data: { userId, postId: id }
-        });
-        invalidateCache('posts:');
-        return { saved: true };
-      }
+      return await toggleBookmark(user.id, id);
     } catch (e) {
       console.error(e);
       set.status = 400;
@@ -299,20 +214,19 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     }
   })
 
-  // DELETE a post (Admin, Author, or Moderator)
   .delete("/:id", async ({ params: { id }, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
-    const user = await db.user.findUnique({ where: { id: userId } });
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
+
     const post = await db.post.findUnique({
       where: { id },
       include: { subreddit: { include: { moderators: { select: { id: true } } } } }
     });
-    if (!post || !user) { set.status = 404; return { error: "Not found" }; }
+    if (!post) { set.status = 404; return notFound("Post"); }
 
     const isMod = post.subreddit.moderators.some(m => m.id === user.id);
     if (post.authorId !== user.id && user.role !== "ADMIN" && !isMod) {
-      set.status = 403; return { error: "Forbidden" };
+      set.status = 403; return forbidden();
     }
 
     try {
@@ -325,15 +239,14 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     }
   })
 
-  // PATCH edit a post (Author only)
   .patch("/:id", async ({ params: { id }, body, headers, set }) => {
     const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
+    if (!userId) { set.status = 401; return unauthorized(); }
     const post = await db.post.findUnique({ where: { id } });
-    if (!post) { set.status = 404; return { error: "Not found" }; }
+    if (!post) { set.status = 404; return notFound("Post"); }
 
     if (post.authorId !== userId) {
-      set.status = 403; return { error: "Forbidden" };
+      set.status = 403; return forbidden();
     }
 
     try {
@@ -364,12 +277,11 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     })
   })
 
-  // PATCH add community note (Admin only)
   .patch("/:id/note", async ({ params: { id }, body, headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) { set.status = 401; return { error: "Unauthorized" }; }
-    const user = await db.user.findUnique({ where: { id: userId } });
-    if (!user || user.role !== "ADMIN") { set.status = 403; return { error: "Forbidden" }; }
+    const user = await requireAuth(db, headers, set);
+    if (!user) return unauthorized();
+
+    if (user.role !== "ADMIN") { set.status = 403; return forbidden(); }
 
     try {
       const post = await db.post.update({

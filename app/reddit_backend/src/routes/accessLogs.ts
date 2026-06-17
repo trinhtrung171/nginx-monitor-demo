@@ -1,16 +1,15 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db";
-import { getClientIp, appAccessCounter } from "../otel-middleware";
+import { getClientIp } from "../lib/client-ip.ts";
+import { appAccessCounter } from "../otel-middleware";
 
 export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
-  // POST /access-logs - Record a new access log when the app is opened
   .post("/", async ({ request, headers, set }) => {
     const userId = headers["x-user-id"];
     const userAgent = request.headers.get("user-agent");
     const ip = getClientIp(request);
 
     try {
-      // If a userId is passed, verify it exists in the database
       let finalUserId: string | null = null;
       let username = "guest";
       if (userId) {
@@ -23,8 +22,6 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
         }
       }
 
-      // Record OpenTelemetry Metric for Grafana Cloud
-      // Using user_type instead of ip/username to prevent High Cardinality issues
       appAccessCounter.add(1, {
         user_type: finalUserId ? "member" : "guest"
       });
@@ -51,7 +48,6 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
     }
   })
 
-  // GET /access-logs - Fetch access logs (Admin only)
   .get("/", async ({ headers, set }) => {
     const userId = headers["x-user-id"];
     if (!userId) {
@@ -59,7 +55,6 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
       return { error: "Unauthorized" };
     }
 
-    // Verify requesting user is an Admin
     const user = await db.user.findUnique({
       where: { id: userId }
     });
@@ -88,7 +83,7 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
             }
           }
         },
-        take: 200 // Limit to last 200 access logs
+        take: 200
       });
 
       return logs;

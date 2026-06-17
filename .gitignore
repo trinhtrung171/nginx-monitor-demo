@@ -29,6 +29,14 @@ grafana_data/
 alertmanager_data/
 loki_data/
 
+# mTLS certificates (never commit private keys or certs)
+certs/*.key
+certs/*.crt
+certs/*.b64
+certs/*.cnf
+certs/*.csr
+certs/*.srl
+
 # Node & Python
 node_modules/
 package-lock.json
