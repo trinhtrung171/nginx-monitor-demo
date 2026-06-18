@@ -47,7 +47,7 @@ export const db =
       queryDurationHistogram.record(e.duration, { query: e.query.substring(0, 100) });
       queriesTotal.add(1);
       recordDbQuery(e.duration, e.query);
-      if (e.duration > 200) {
+      if (e.duration > 50) {
         slowQueryCounter.add(1);
         recordSlowQuery();
         console.log(JSON.stringify({
