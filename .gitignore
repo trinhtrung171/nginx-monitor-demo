@@ -29,6 +29,9 @@ grafana_data/
 alertmanager_data/
 loki_data/
 
+# Uploaded files (now stored in DB, filesystem is fallback)
+app/reddit_backend/public/uploads/
+
 # Node & Python
 node_modules/
 package-lock.json

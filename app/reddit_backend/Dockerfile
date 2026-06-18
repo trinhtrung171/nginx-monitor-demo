@@ -9,8 +9,6 @@ COPY . .
 
 RUN bunx prisma generate
 
-RUN mkdir -p public/uploads
-
 EXPOSE 3001
 
-CMD ["bun", "src/index.ts"]
+CMD ["sh", "-c", "bunx prisma db push && bun src/index.ts"]
