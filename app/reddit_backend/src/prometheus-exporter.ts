@@ -67,6 +67,35 @@ export function recordError(method: string, path: string) {
   errorCounter.inc({ method, path }, 1);
 }
 
+const dbQueriesCounter = new client.Counter({
+  name: 'db_queries_total',
+  help: 'Total number of database queries',
+  registers: [register],
+});
+
+const dbQueryDurationHistogram = new client.Histogram({
+  name: 'db_query_duration_milliseconds',
+  help: 'Duration of database queries in milliseconds',
+  labelNames: ['query'],
+  buckets: [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000],
+  registers: [register],
+});
+
+const slowQueryCounter = new client.Counter({
+  name: 'slow_query_total',
+  help: 'Total number of slow queries (>200ms)',
+  registers: [register],
+});
+
+export function recordDbQuery(durationMs: number, query: string) {
+  dbQueriesCounter.inc(1);
+  dbQueryDurationHistogram.observe({ query: query.substring(0, 100) }, durationMs);
+}
+
+export function recordSlowQuery() {
+  slowQueryCounter.inc(1);
+}
+
 export async function metricsHandler(): Promise<string> {
   updateProcessMetrics();
   return await register.metrics();

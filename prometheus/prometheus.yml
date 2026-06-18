@@ -79,6 +79,16 @@ scrape_configs:
       type: Bearer
       credentials_file: /etc/prometheus/metrics_token.txt
 
+  # Local Backend: scrape prom-client /metrics từ container devshare-backend
+  - job_name: 'devshare-backend'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['devshare-backend:3001']
+    scrape_interval: 15s
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/metrics_token.txt
+
 rule_files:
   - "alert_rules.yml"
   - "app_rules.yml"

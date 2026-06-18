@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { metrics } from '@opentelemetry/api';
+import { recordDbQuery, recordSlowQuery } from "./prometheus-exporter";
 
 const meter = metrics.getMeter('app-db');
 const slowQueryCounter = meter.createCounter('slow_query_total', {
@@ -45,8 +46,10 @@ export const db =
     prisma.$on("query" as any, (e: any) => {
       queryDurationHistogram.record(e.duration, { query: e.query.substring(0, 100) });
       queriesTotal.add(1);
+      recordDbQuery(e.duration, e.query);
       if (e.duration > 200) {
         slowQueryCounter.add(1);
+        recordSlowQuery();
         console.log(JSON.stringify({
           timestamp: new Date().toISOString(),
           type: "slow_query",
