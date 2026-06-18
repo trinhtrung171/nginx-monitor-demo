@@ -73,7 +73,14 @@ export async function metricsHandler(): Promise<string> {
 }
 
 export function registerMetricsRoute(app: Elysia) {
-  app.get('/metrics', async () => {
+  app.get('/metrics', async ({ request }) => {
+    const authToken = process.env.METRICS_AUTH_TOKEN;
+    if (authToken) {
+      const auth = request.headers.get('authorization');
+      if (auth !== `Bearer ${authToken}`) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+    }
     const body = await metricsHandler();
     return new Response(body, {
       headers: { 'content-type': register.contentType },

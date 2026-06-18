@@ -1,7 +1,6 @@
 import './monitoring';
 import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
-import { staticPlugin } from "@elysiajs/static";
 import { postRoutes } from "./routes/posts";
 import { subredditRoutes } from "./routes/subreddits";
 import { commentRoutes } from "./routes/comments";
@@ -18,8 +17,7 @@ import { registerMetricsRoute, recordError } from "./prometheus-exporter";
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 const app = new Elysia()
-  .use(cors())
-  .use(staticPlugin({ assets: "public", prefix: "/" }));
+  .use(cors());
 
 registerOTel(app);
 registerAccessLogger(app);
@@ -57,8 +55,13 @@ app
       file: t.File()
     })
   })
-  .get("/uploads/:filename", ({ params: { filename } }) => {
-    return Bun.file(`public/uploads/${filename}`);
+  .get("/uploads/:filename", async ({ params: { filename }, set }) => {
+    const file = Bun.file(`public/uploads/${filename}`);
+    if (!await file.exists()) {
+      set.status = 404;
+      return { error: "File not found" };
+    }
+    return file;
   })
   .use(authRoutes)
   .use(postRoutes)

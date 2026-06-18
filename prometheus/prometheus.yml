@@ -75,6 +75,9 @@ scrape_configs:
       - targets: ['nginx-monitor-demo.onrender.com']
     scheme: https
     scrape_interval: 30s
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/metrics_token.txt
 
 rule_files:
   - "alert_rules.yml"

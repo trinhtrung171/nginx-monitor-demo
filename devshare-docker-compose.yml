@@ -27,6 +27,7 @@ services:
       OTEL_SERVICE_NAME: "devshare-backend"
       PUBLIC_URL: "http://localhost:8080"
       PORT: "3001"
+      METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN}
     volumes:
       - ./app/reddit_backend/public/uploads:/app/public/uploads
     networks:
