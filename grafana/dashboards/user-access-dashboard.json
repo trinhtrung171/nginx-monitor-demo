@@ -23,7 +23,7 @@
     {
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres"
+        "uid": "${ds_postgres}"
       },
       "fieldConfig": {
         "defaults": {
@@ -103,7 +103,7 @@
         {
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
+            "uid": "${ds_postgres}"
           },
           "editorMode": "code",
           "format": "table",
@@ -135,7 +135,7 @@
     {
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres"
+        "uid": "${ds_postgres}"
       },
       "fieldConfig": {
         "defaults": {
@@ -219,7 +219,7 @@
         {
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
+            "uid": "${ds_postgres}"
           },
           "editorMode": "code",
           "format": "table",
@@ -251,7 +251,7 @@
     {
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres"
+        "uid": "${ds_postgres}"
       },
       "fieldConfig": {
         "defaults": {
@@ -356,7 +356,7 @@
         {
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
+            "uid": "${ds_postgres}"
           },
           "editorMode": "code",
           "format": "table",
@@ -384,7 +384,7 @@
         {
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
+            "uid": "${ds_postgres}"
           },
           "editorMode": "code",
           "format": "table",
@@ -412,7 +412,7 @@
         {
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
+            "uid": "${ds_postgres}"
           },
           "editorMode": "code",
           "format": "table",
@@ -440,7 +440,7 @@
         {
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
+            "uid": "${ds_postgres}"
           },
           "editorMode": "code",
           "format": "table",
@@ -472,7 +472,7 @@
     {
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres"
+        "uid": "${ds_postgres}"
       },
       "fieldConfig": {
         "defaults": {
@@ -522,7 +522,7 @@
         {
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
+            "uid": "${ds_postgres}"
           },
           "editorMode": "code",
           "format": "table",
@@ -592,7 +592,7 @@
     {
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres"
+        "uid": "${ds_postgres}"
       },
       "fieldConfig": {
         "defaults": {
@@ -653,7 +653,7 @@
         {
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
+            "uid": "${ds_postgres}"
           },
           "editorMode": "code",
           "format": "table",
@@ -682,11 +682,10 @@
       "title": "Bandwidth per IP (bytes sent)",
       "type": "table"
     },
-
     {
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres"
+        "uid": "${ds_postgres}"
       },
       "fieldConfig": {
         "defaults": {},
@@ -712,7 +711,7 @@
         {
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
+            "uid": "${ds_postgres}"
           },
           "editorMode": "code",
           "format": "table",
@@ -751,7 +750,24 @@
     "postgresql"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "ds_postgres",
+        "type": "datasource",
+        "query": "postgres",
+        "current": {
+          "selected": false,
+          "text": "PostgreSQL Local",
+          "value": "devshare-postgres-local"
+        },
+        "options": [],
+        "refresh": 1,
+        "hide": 0,
+        "label": "Postgres DB",
+        "regex": "",
+        "skipUrlSync": false
+      }
+    ]
   },
   "time": {
     "from": "now-30m",

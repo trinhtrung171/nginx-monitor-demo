@@ -5,10 +5,11 @@ Monitor Nginx with Docker Compose stack: Nginx → Backend (Bun/Elysia) → Post
 
 ## Active Architecture
 
-- **Frontend** (`VITE_API_URL=https://nginx-monitor-demo.onrender.com`): All API calls go to Render backend, NOT local Docker backend
-- **Dual Database**: Local Docker Postgres (seed 4 posts) vs Neon cloud (real user data)
-- **Render Backend**: Exposes `/metrics` via prom-client, scraped by local Prometheus (`render-backend` job)
-- **Local Backend**: Exports OTel metrics → OTel Collector → Prometheus:8889, plus own `/metrics` (prom-client, scraped by `devshare-backend` job)
+- **Frontend**: Dual env — `.env.development` → `VITE_API_URL=http://localhost:8080` (local dev), `.env.production` → `VITE_API_URL=https://nginx-monitor-demo.onrender.com` (build/deploy)
+- **Dual Database**: Local Docker Postgres (`devshare-db:5432`, uid `devshare-postgres-local`) vs Neon cloud (uid `devshare-postgres-neon`)
+- **Grafana Dashboard**: User Access Logs has `$ds_postgres` variable to switch between local and Neon Postgres datasources
+- **Render Backend**: Exposes `/metrics` via prom-client, scraped by local Prometheus (`render-backend` job). Writes access logs to Neon DB.
+- **Local Backend**: Exports OTel metrics → OTel Collector → Prometheus:8889, plus own `/metrics` (prom-client, scraped by `devshare-backend` job). Writes access logs to local Postgres.
 - **Uploads**: Stored in DB via `Media` Prisma model (persists across restarts on Render); filesystem fallback exists
 
 ## Session: June 18, 2026
@@ -74,6 +75,29 @@ Monitor Nginx with Docker Compose stack: Nginx → Backend (Bun/Elysia) → Post
    - **Fix**: `docker compose -f monitor-docker-compose.yml up -d node-exporter`
    - **Result**: CPU 46.7%, RAM 13.3%, Load 0.09, Disk I/O 375 KB/s, Net I/O ~50 B/s
 
+### Session: June 19, 2026
+
+10. **IP always 127.0.0.1 fix**
+    - **Root cause**: `getClientIp()` (`otel-middleware.ts:65-91`) chỉ check `x-real-ip` → `cf-connecting-ip` → `Bun.requestIP()`, không check `x-client-ip` (frontend gửi IP thật từ `api.ipify.org`) và `x-forwarded-for` (nginx/proxy set).
+    - Trên Docker Desktop macOS, `requestIP()` trả về null/undefined → fallback hardcoded `'127.0.0.1'`.
+    - **Fix**: Thêm `x-client-ip` (ưu tiên cao nhất), `x-forwarded-for` (parse first IP), đổi fallback thành `'0.0.0.0'`, refactor thành `cleanIp()` helper.
+    - **Result**: Frontend gửi `x-client-ip` → backend dùng đúng IP thật. curl không header → `0.0.0.0` thay vì `127.0.0.1`.
+
+11. **Username always anonymous fix**
+    - **Root cause 1 (local test)**: curl không gửi `x-user-id` → mặc định `'anonymous'`. Frontend gửi `x-user-id` nhưng `VITE_API_URL` trỏ Render, không đến local backend.
+    - **Root cause 2 (silent failure)**: `getUsername()` catch block im lặng, không log error → khó debug.
+    - **Root cause 3 (FK error)**: Khi userId gửi lên không tồn tại trong DB, `AccessLog.userId` FK constraint fail → `.catch(() => {})` swallow error → mất row.
+    - **Fix**: Thêm `console.error` vào catch của `getUsername()`. Nếu username là `'anonymous'` (user không tồn tại) → set `userId = null` trước khi ghi DB, tránh FK violation.
+    - **Result**: userId hợp lệ → username đúng (e.g. `devshare_admin`). userId không hợp lệ → `username: anonymous, userId: null`, không FK error.
+
+12. **Dual-mode frontend & Grafana datasource switch**
+    - **Problem**: Frontend luôn gọi Render → data vào Neon, Grafana query local Postgres → không thấy data production.
+    - **Fix**:
+      - `app/reddit_frontend/.env.development` → `VITE_API_URL=http://localhost:8080` (dùng `npm run dev` cho local)
+      - `grafana/provisioning/datasources/postgres-neon.yml` → Neon datasource (uid `devshare-postgres-neon`)
+      - `user-access-dashboard.json` → thêm variable `$ds_postgres` type datasource, thay 15 hardcoded `devshare-postgres` thành `${ds_postgres}`
+    - **Result**: Dev `npm run dev` → local data. Prod build → Render data. Dashboard có dropdown chọn Postgres DB.
+
 ### Key Config Files
 
 - `devshare-docker-compose.yml` — entire stack
@@ -82,11 +106,16 @@ Monitor Nginx with Docker Compose stack: Nginx → Backend (Bun/Elysia) → Post
 - `prometheus/otel-collector-config.yml` — OTel pipeline
 - `app/reddit_backend/src/prometheus-exporter.ts` — prom-client metrics (HTTP + DB)
 - `app/reddit_backend/src/db.ts` — DB metrics instrumentation (OTel + prom-client)
-- `app/reddit_backend/src/otel-middleware.ts` — OTel metrics (app_access_total, db_*)
-- `app/reddit_backend/prisma/schema.prisma` — Media model
+- `app/reddit_backend/src/otel-middleware.ts` — OTel metrics + `getClientIp()`
+- `app/reddit_backend/src/access-logger.ts` — access logging (Loki + DB), username resolution
+- `app/reddit_backend/prisma/schema.prisma` — Media model, AccessLog model
 - `app/reddit_backend/Dockerfile` — prisma db push in CMD
-- `grafana/dashboards/application-dashboard.json` — "Application — API Performance"
-- `grafana/dashboards/database-dashboard.json` — "Database Queries"
+- `app/reddit_frontend/.env.development` — `VITE_API_URL=http://localhost:8080`
+- `app/reddit_frontend/.env.production` — `VITE_API_URL=https://nginx-monitor-demo.onrender.com`
+- `grafana/provisioning/datasources/postgres-neon.yml` — Neon cloud datasource
+- `grafana/dashboards/user-access-dashboard.json` — User Access Logs (has `$ds_postgres` variable)
+- `grafana/dashboards/application-dashboard.json` — Application — API Performance
+- `grafana/dashboards/database-dashboard.json` — Database Queries
 
 ### Commands
 

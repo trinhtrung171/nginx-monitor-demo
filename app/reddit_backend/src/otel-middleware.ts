@@ -62,32 +62,32 @@ export function setAppServer(server: any) {
   _server = server;
 }
 
+function cleanIp(ip: string): string {
+  ip = ip.trim();
+  if (ip.startsWith('::ffff:')) ip = ip.substring(7);
+  return ip;
+}
+
 export const getClientIp = (request: Request) => {
+  const clientIp = request.headers.get('x-client-ip');
+  if (clientIp) return cleanIp(clientIp);
+
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  if (forwardedFor) return cleanIp(forwardedFor.split(',')[0]);
+
   const realIp = request.headers.get('x-real-ip');
-  if (realIp) {
-    let ip = realIp.trim();
-    if (ip.startsWith('::ffff:')) ip = ip.substring(7);
-    return ip;
-  }
+  if (realIp) return cleanIp(realIp);
 
   const cfConnectingIp = request.headers.get('cf-connecting-ip');
-  if (cfConnectingIp) {
-    let ip = cfConnectingIp.trim();
-    if (ip.startsWith('::ffff:')) ip = ip.substring(7);
-    return ip;
-  }
+  if (cfConnectingIp) return cleanIp(cfConnectingIp);
 
   try {
     if (_server) {
       const socketAddr = _server.requestIP(request);
-      if (socketAddr?.address) {
-        let ip = socketAddr.address;
-        if (ip.startsWith('::ffff:')) ip = ip.substring(7);
-        return ip;
-      }
+      if (socketAddr?.address) return cleanIp(socketAddr.address);
     }
   } catch {}
-  return '127.0.0.1';
+  return '0.0.0.0';
 };
 
 export function registerOTel(app: Elysia) {

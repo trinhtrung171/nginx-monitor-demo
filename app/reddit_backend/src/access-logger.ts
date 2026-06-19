@@ -13,7 +13,8 @@ async function getUsername(userId: string): Promise<string> {
     const username = user?.username || 'anonymous';
     usernameCache.set(userId, { username, expiresAt: Date.now() + CACHE_TTL_MS });
     return username;
-  } catch {
+  } catch (err) {
+    console.error('getUsername error for userId', userId, ':', err);
     return 'anonymous';
   }
 }
@@ -54,15 +55,17 @@ export function registerAccessLogger(app: Elysia) {
       const activePath = route || path || new URL(request.url).pathname;
       const ip = getClientIp(request);
       const userAgent = request.headers.get('user-agent') || '';
-      const userId = request.headers.get('x-user-id');
-      const username = userId ? await getUsername(userId) : 'anonymous';
+      const rawUserId = request.headers.get('x-user-id');
+      let userId = rawUserId || null;
+      const username = rawUserId ? await getUsername(rawUserId) : 'anonymous';
+      if (rawUserId && username === 'anonymous') userId = null;
 
       const bytesSent = computeBytesSent(response);
 
       const logEntry = {
         timestamp: new Date().toISOString(),
         ip,
-        user_id: userId || null,
+        user_id: userId,
         username,
         method,
         path: activePath,
@@ -77,7 +80,7 @@ export function registerAccessLogger(app: Elysia) {
       const skipDb = ['/metrics', '/health'];
       if (!skipDb.includes(activePath)) {
         db.accessLog.create({
-          data: { ip, userId: userId || null, username, userAgent, method, path: activePath, status, durationMs: duration_ms, bytesSent },
+          data: { ip, userId, username, userAgent, method, path: activePath, status, durationMs: duration_ms, bytesSent },
         }).catch(() => {});
       }
     } catch (err) {
