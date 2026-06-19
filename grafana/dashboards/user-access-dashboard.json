@@ -108,7 +108,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \"ip\" AS \"IP Address\", COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\nGROUP BY \"ip\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
+          "rawSql": "SELECT \"ip\" AS \"IP Address\", COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\nGROUP BY \"ip\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -224,7 +224,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\", '1m') AS \"time\",\n  COUNT(*)::float / 60.0 AS \"req/s\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\nGROUP BY \"time\"\nORDER BY \"time\";",
+          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\", '1m') AS \"time\",\n  COUNT(*)::float / 60.0 AS \"req/s\"\n  FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\nGROUP BY \"time\"\nORDER BY \"time\";",
           "refId": "A",
           "sql": {
             "columns": [
@@ -361,7 +361,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"status\" >= 200 AND \"status\" < 300;",
+          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"status\" >= 200 AND \"status\" < 300;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -389,7 +389,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"status\" >= 300 AND \"status\" < 400;",
+          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"status\" >= 300 AND \"status\" < 400;",
           "refId": "B",
           "sql": {
             "columns": [
@@ -417,7 +417,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"status\" >= 400 AND \"status\" < 500;",
+          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"status\" >= 400 AND \"status\" < 500;",
           "refId": "C",
           "sql": {
             "columns": [
@@ -445,7 +445,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"status\" >= 500;",
+          "rawSql": "SELECT COUNT(*)::int FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"status\" >= 500;",
           "refId": "D",
           "sql": {
             "columns": [
@@ -527,7 +527,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  \"method\" AS \"Method\",\n  \"path\" AS \"Path\",\n  COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"method\" IS NOT NULL\n  AND \"path\" IS NOT NULL\nGROUP BY \"method\", \"path\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
+          "rawSql": "SELECT\n  \"method\" AS \"Method\",\n  \"path\" AS \"Path\",\n  COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" IS NOT NULL\n  AND \"path\" IS NOT NULL\nGROUP BY \"method\", \"path\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -580,7 +580,7 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | username != \"\" | username != \"anonymous\" | line_format \"{{.timestamp}} | {{.ip}} | {{.username}} | {{.method}} {{.path}} -> {{.status}} ({{.duration_ms}}ms)\"",
+          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | path != \"/metrics\" | line_format \"{{.timestamp}} | {{.ip}} | {{.username}} | {{.user_agent}} | {{.method}} {{.path}} -> {{.status}} ({{.duration_ms}}ms)\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -658,7 +658,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  \"ip\" AS \"IP Address\",\n  SUM(\"bytesSent\")::bigint AS \"Bytes Sent\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"username\" IS NOT NULL AND \"username\" != ''\n  AND \"bytesSent\" IS NOT NULL\nGROUP BY \"ip\"\nORDER BY \"Bytes Sent\" DESC\nLIMIT 10;",
+          "rawSql": "SELECT\n  \"ip\" AS \"IP Address\",\n  SUM(\"bytesSent\")::bigint AS \"Bytes Sent\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"bytesSent\" IS NOT NULL\nGROUP BY \"ip\"\nORDER BY \"Bytes Sent\" DESC\nLIMIT 10;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -682,64 +682,7 @@
       "title": "Bandwidth per IP (bytes sent)",
       "type": "table"
     },
-    {
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres"
-      },
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 25
-      },
-      "id": 10,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true,
-        "footer": {
-          "reducers": [],
-          "show": false
-        }
-      },
-      "pluginVersion": "12.4.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "devshare-postgres"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  \"createdAt\",\n  \"ip\" AS \"IP\",\n  COALESCE(\"username\", 'Guest') AS \"Username\",\n  \"method\",\n  \"path\",\n  \"status\",\n  \"durationMs\" AS \"Duration (ms)\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"durationMs\" > 500\n  AND \"method\" IS NOT NULL\nORDER BY \"createdAt\" DESC\nLIMIT 200;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Slow Requests (>500ms)",
-      "type": "table"
-    },
+
     {
       "datasource": {
         "type": "grafana-postgresql-datasource",
@@ -774,7 +717,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  al.\"createdAt\" AS \"Access Time\",\n  al.\"ip\" AS \"IP Address\",\n  COALESCE(al.\"username\", 'Guest') AS \"Username\",\n  al.\"userAgent\" AS \"Device\"\nFROM \"AccessLog\" al\nWHERE $__timeFilter(al.\"createdAt\")\n  AND al.\"username\" IS NOT NULL\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;",
+          "rawSql": "SELECT\n  al.\"createdAt\" AS \"Access Time\",\n  al.\"ip\" AS \"IP Address\",\n  COALESCE(al.\"username\", 'Guest') AS \"Username\",\n  al.\"userAgent\" AS \"Device\"\nFROM \"AccessLog\" al\nWHERE $__timeFilter(al.\"createdAt\")\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;",
           "refId": "A",
           "sql": {
             "columns": [

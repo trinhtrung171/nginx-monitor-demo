@@ -57,20 +57,29 @@ export function registerAccessLogger(app: Elysia) {
       const userId = request.headers.get('x-user-id');
       const username = userId ? await getUsername(userId) : 'anonymous';
 
+      const bytesSent = computeBytesSent(response);
+
       const logEntry = {
         timestamp: new Date().toISOString(),
         ip,
-        user_id: userId || null, // Include user_id field for Loki queries
+        user_id: userId || null,
         username,
         method,
         path: activePath,
         status,
         duration_ms,
-        bytes_sent: computeBytesSent(response),
+        bytes_sent: bytesSent,
         user_agent: userAgent,
       };
 
       console.log(JSON.stringify(logEntry));
+
+      const skipDb = ['/metrics', '/health'];
+      if (!skipDb.includes(activePath)) {
+        db.accessLog.create({
+          data: { ip, userId: userId || null, username, userAgent, method, path: activePath, status, durationMs: duration_ms, bytesSent },
+        }).catch(() => {});
+      }
     } catch (err) {
       startTimes.delete(request);
       console.error('Failed to write access log:', err);

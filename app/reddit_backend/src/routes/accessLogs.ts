@@ -38,7 +38,6 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
     }
 
     try {
-      // If a userId is passed, verify it exists in the database
       let finalUserId: string | null = null;
       let username = "guest";
       if (userId) {
@@ -57,21 +56,7 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
         user_type: finalUserId ? "member" : "guest"
       });
 
-      const log = await db.accessLog.create({
-        data: {
-          ip,
-          userId: finalUserId,
-          username: finalUserId ? username : null,
-          userAgent: userAgent || null,
-          method: "GET",
-          path: "/",
-          status: 200,
-          durationMs: 0,
-          bytesSent: 0
-        }
-      });
-
-      return { success: true, logId: log.id };
+      return { success: true };
     } catch (e) {
       console.error("Failed to record access log:", e);
       set.status = 500;
