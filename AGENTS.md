@@ -197,6 +197,13 @@ open http://localhost:3000
     - **Files changed**:
       - `app/reddit_backend/src/access-logger.ts` — replace skipIps with isRealUserRequest()
 
+18. **Logout không ghi guest entry (stale fetchMeta.userId)**
+    - **Problem**: Sau logout, POST /access-logs thứ 2 (guest) không được ghi vào DB. Chỉ hiện sau reload.
+    - **Root cause**: `logout()` gọi `setUser(null)` rồi `fetch()` ngay. `fetchMeta.current.userId` chưa kịp update (React chưa re-render). Fetch wrapper vẫn gửi `x-user-id: <oldUserId>` → backend dedup key trùng với POST đầu → guest entry bị dedup.
+    - **Fix**: `setTimeout(0)` để defer POST guest sau khi React kịp re-render và useEffect cập nhật fetchMeta.
+    - **Files changed**:
+      - `app/reddit_frontend/src/AuthContext.jsx` — setTimeout(0) quanh guest POST
+
 ### Known Issues / Open Items
 - Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.
 - `computeBytesSent()` vẫn trả về 0 cho `Elysia-set` response objects (không có content-length header từ Elysia). Chỉ fix cho `new Response()` với data buffer.

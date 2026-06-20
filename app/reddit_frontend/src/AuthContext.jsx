@@ -45,8 +45,11 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem('ds_user')
     setUser(null)
-    // Log new guest session AFTER clearing so dedup key is different (ip: vs ip:userId)
-    fetch(`${API}/access-logs`, { method: 'POST' }).catch(() => {})
+    // Defer to next tick so React processes setUser → useEffect updates fetchMeta → wrapper picks up null userId
+    // Without this, fetchMeta.current.userId still has old value → fetch wrapper adds stale x-user-id → guest entry deduped
+    setTimeout(() => {
+      fetch(`${API}/access-logs`, { method: 'POST' }).catch(() => {})
+    }, 0)
   }
 
   const updateUser = (newData) => {
