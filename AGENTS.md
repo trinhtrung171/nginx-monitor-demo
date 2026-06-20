@@ -204,11 +204,12 @@ open http://localhost:3000
     - **Files changed**:
       - `app/reddit_frontend/src/AuthContext.jsx` — setTimeout(0) quanh guest POST
 
-19. **Filter Render browser health checks (HeadlessChrome UA)**
-    - **Problem**: Render Browser Health Checks dùng Playwright/Puppeteer với HeadlessChrome, đi qua frontend SPA nên có x-client-ip → lọt qua isRealUserRequest() → vẫn ghi vào DB.
-    - **Fix**: Thêm `ua.includes('HeadlessChrome')` vào `isRealUserRequest()` → skip luôn.
+19. **Filter non-browser traffic + Render health checks (UA heuristic)**
+    - **Problem**: curl, HTTP libs, và Render Browser Health Checks đều lọt log dù x-client-ip có hoặc không.
+    - **Fix**: `isRealUserRequest()` kiểm tra `(KHTML, like Gecko)` trong UA (chỉ browser thật mới có) + `HeadlessChrome` (Render synthetic).
+    - **Result**: Chỉ request từ trình duyệt thật (Chrome, Firefox, Safari, Edge) mới được log. Curl, API clients, HeadlessChrome đều skip.
     - **Files changed**:
-      - `app/reddit_backend/src/access-logger.ts` — check HeadlessChrome trong UA
+      - `app/reddit_backend/src/access-logger.ts` — UA heuristic trong isRealUserRequest()
 
 ### Known Issues / Open Items
 - Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.

@@ -9,10 +9,11 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 const dbWriteTimestamps = new Map<string, number>();
 const DB_WRITE_INTERVAL_MS = 60_000;
 
-// Requests without x-client-ip (frontend) nor x-user-id are system/health-check traffic, not real users
-// HeadlessChrome in UA = Render browser health check (Playwright/Puppeteer synthetic monitoring)
+// Only real browser requests have (KHTML, like Gecko) in User-Agent
+// HeadlessChrome = Render browser health check (Playwright/Puppeteer synthetic monitoring)
 function isRealUserRequest(request: Request): boolean {
   const ua = request.headers.get('user-agent') || '';
+  if (!ua.includes('(KHTML, like Gecko)')) return false;
   if (ua.includes('HeadlessChrome')) return false;
   return !!(request.headers.get('x-client-ip') || request.headers.get('x-user-id'));
 }
