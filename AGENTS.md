@@ -189,6 +189,12 @@ open http://localhost:3000
       - `app/reddit_backend/src/access-logger.ts` — DB write với rate limit 1/IP/60s
       - `grafana/dashboards/user-access-dashboard.json` — Panel 6 SQL
 
+17. **Filter Render health check IPs (AWS us-west-1)**
+    - **Problem**: Render health check IPs (18.144.29.19, 54.151.28.90, 54.177.112.13, 54.67.115.97) logged to Loki & DB, polluting data with non-user traffic.
+    - **Fix**: Thêm `skipIps` Set vào `access-logger.ts`, skip cả console.log và DB write cho các IP này.
+    - **Files changed**:
+      - `app/reddit_backend/src/access-logger.ts` — thêm skipIps list, check trước khi log
+
 ### Known Issues / Open Items
 - Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.
 - `computeBytesSent()` vẫn trả về 0 cho `Elysia-set` response objects (không có content-length header từ Elysia). Chỉ fix cho `new Response()` với data buffer.
