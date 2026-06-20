@@ -177,6 +177,18 @@ open http://localhost:3000
       - `app/reddit_backend/src/routes/accessLogs.ts` — dedup key bao gồm userId
       - `app/reddit_frontend/src/AuthContext.jsx` — POST /access-logs trong login/logout/register
 
+16. **Middleware DB writes + Bandwidth panel fix + logout→guest fix**
+    - **Problem**: Logout ghi test03 thay vì guest. Bandwidth per IP panel luôn 0 (bytesSent=0). Middleware không ghi DB → chỉ có session ping entries.
+    - **Fixes**:
+      - `AuthContext.jsx` — `logout()` gọi POST /access-logs 2 lần: trước khi clear (với userId cũ) và sau khi clear (guest session với dedup key khác)
+      - `access-logger.ts` — sau `console.log`, ghi DB 1 entry/IP/60s với real bytesSent, method, path, status → Bandwidth + IP panels có data thật
+      - `user-access-dashboard.json` — Panel 6 SQL xoá `method = 'ACCESS'` filter, thêm `bytesSent > 0` → hiển thị real bandwidth data
+    - **Result**: Bandwidth panel có data (GET /posts/ → 4786 bytes). Middleware ghi DB entry với method='GET'. Logout ghi đúng guest→test03→guest.
+    - **Files changed**:
+      - `app/reddit_frontend/src/AuthContext.jsx` — logout gọi 2 POST /access-logs
+      - `app/reddit_backend/src/access-logger.ts` — DB write với rate limit 1/IP/60s
+      - `grafana/dashboards/user-access-dashboard.json` — Panel 6 SQL
+
 ### Known Issues / Open Items
 - Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.
 - `computeBytesSent()` vẫn trả về 0 cho `Elysia-set` response objects (không có content-length header từ Elysia). Chỉ fix cho `new Response()` với data buffer.

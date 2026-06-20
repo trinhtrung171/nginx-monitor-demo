@@ -568,7 +568,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  \"ip\" AS \"IP Address\",\n  SUM(\"bytesSent\")::bigint AS \"Bytes Sent\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"bytesSent\" IS NOT NULL\nGROUP BY \"ip\"\nORDER BY \"Bytes Sent\" DESC\nLIMIT 10;",
+          "rawSql": "SELECT\n  \"ip\" AS \"IP Address\",\n  SUM(\"bytesSent\")::bigint AS \"Bytes Sent\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"bytesSent\" IS NOT NULL AND \"bytesSent\" > 0\nGROUP BY \"ip\"\nORDER BY \"Bytes Sent\" DESC\nLIMIT 10;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -668,6 +668,6 @@
   "timezone": "browser",
   "title": "User Access Logs",
   "uid": "user-access-dashboard",
-  "version": 64,
+  "version": 65,
   "weekStart": ""
 }

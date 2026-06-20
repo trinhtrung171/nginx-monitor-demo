@@ -38,13 +38,15 @@ export function AuthProvider({ children }) {
   }
 
   const logout = () => {
-    const userId = user?.id
+    const oldUserId = user?.id
+    // Log last activity as the old user BEFORE clearing
+    if (oldUserId) {
+      fetch(`${API}/access-logs`, { method: 'POST', headers: { 'x-user-id': oldUserId } }).catch(() => {})
+    }
     localStorage.removeItem('ds_user')
     setUser(null)
-    // Log the logout so Access Logs DB shows username → guest transition
-    if (userId) {
-      fetch(`${API}/access-logs`, { method: 'POST', headers: { 'x-user-id': userId } }).catch(() => {})
-    }
+    // Log new guest session AFTER clearing so dedup key is different (ip: vs ip:userId)
+    fetch(`${API}/access-logs`, { method: 'POST' }).catch(() => {})
   }
 
   const updateUser = (newData) => {
