@@ -9,13 +9,10 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 const dbWriteTimestamps = new Map<string, number>();
 const DB_WRITE_INTERVAL_MS = 60_000;
 
-// Render health check IPs (AWS us-west-1) – skip logging entirely
-const skipIps = new Set([
-  '18.144.29.19',
-  '54.151.28.90',
-  '54.177.112.13',
-  '54.67.115.97',
-]);
+// Requests without x-client-ip (frontend) nor x-user-id are system/health-check traffic, not real users
+function isRealUserRequest(request: Request): boolean {
+  return !!(request.headers.get('x-client-ip') || request.headers.get('x-user-id'));
+}
 
 async function getUsername(userId: string): Promise<string> {
   const cached = usernameCache.get(userId);
@@ -88,7 +85,7 @@ export function registerAccessLogger(app: Elysia) {
       };
 
       const skipPaths = ['/metrics', '/health'];
-      if (skipPaths.includes(activePath) || skipIps.has(ip)) return;
+      if (skipPaths.includes(activePath) || !isRealUserRequest(request)) return;
 
       console.log(JSON.stringify(logEntry));
 

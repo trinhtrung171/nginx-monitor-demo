@@ -189,11 +189,13 @@ open http://localhost:3000
       - `app/reddit_backend/src/access-logger.ts` — DB write với rate limit 1/IP/60s
       - `grafana/dashboards/user-access-dashboard.json` — Panel 6 SQL
 
-17. **Filter Render health check IPs (AWS us-west-1)**
-    - **Problem**: Render health check IPs (18.144.29.19, 54.151.28.90, 54.177.112.13, 54.67.115.97) logged to Loki & DB, polluting data with non-user traffic.
-    - **Fix**: Thêm `skipIps` Set vào `access-logger.ts`, skip cả console.log và DB write cho các IP này.
+17. **Filter system/health-check traffic (replacing IP blocklist with header heuristic)**
+    - **Problem**: IP blocklist (`skipIps`) không bền vững — Render health checks đến từ nhiều IP khác nhau (AWS, GCP, Azure), luôn có IP mới xuất hiện.
+    - **Root cause**: System probes không gửi `x-client-ip` header (chỉ frontend thật mới gửi) và không gửi `x-user-id`.
+    - **Fix**: Thay `skipIps` Set bằng `isRealUserRequest()` function — kiểm tra `x-client-ip || x-user-id` header. Nếu không có cả 2 → skip console.log + DB write.
+    - **Result**: Mọi request từ Render health check, monitoring bots, hay curl không header đều tự động bị skip. Không cần maintain danh sách IP.
     - **Files changed**:
-      - `app/reddit_backend/src/access-logger.ts` — thêm skipIps list, check trước khi log
+      - `app/reddit_backend/src/access-logger.ts` — replace skipIps with isRealUserRequest()
 
 ### Known Issues / Open Items
 - Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.
