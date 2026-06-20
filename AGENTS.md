@@ -204,6 +204,12 @@ open http://localhost:3000
     - **Files changed**:
       - `app/reddit_frontend/src/AuthContext.jsx` — setTimeout(0) quanh guest POST
 
+19. **Filter Render browser health checks (HeadlessChrome UA)**
+    - **Problem**: Render Browser Health Checks dùng Playwright/Puppeteer với HeadlessChrome, đi qua frontend SPA nên có x-client-ip → lọt qua isRealUserRequest() → vẫn ghi vào DB.
+    - **Fix**: Thêm `ua.includes('HeadlessChrome')` vào `isRealUserRequest()` → skip luôn.
+    - **Files changed**:
+      - `app/reddit_backend/src/access-logger.ts` — check HeadlessChrome trong UA
+
 ### Known Issues / Open Items
 - Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.
 - `computeBytesSent()` vẫn trả về 0 cho `Elysia-set` response objects (không có content-length header từ Elysia). Chỉ fix cho `new Response()` với data buffer.
