@@ -155,11 +155,27 @@ open http://localhost:3000
      - **Dashboard tags**: Thêm "loki", "monitoring".
    - **Loki data loss fix confirmed**: Filter `/metrics` từ `console.log` ở `access-logger.ts:78-79` hoạt động. Loki hiển thị data sau khi có traffic local.
    - **bytesSent fix**: Thêm `'content-length'` header vào `new Response(media.data)` ở `index.ts` giúp `computeBytesSent()` detect đúng kích thước file upload.
-   - **Dashboard version**: 62 (đã restart Grafana).
-   - **Files changed**:
-     - `grafana/dashboards/user-access-dashboard.json` — 5 panel fixes
-     - `app/reddit_backend/src/access-logger.ts` — skip /metrics trước console.log
-     - `app/reddit_backend/src/index.ts` — content-length cho upload response
+    - **Dashboard version**: 62 (đã restart Grafana).
+    - **Files changed**:
+      - `grafana/dashboards/user-access-dashboard.json` — 5 panel fixes
+      - `app/reddit_backend/src/access-logger.ts` — skip /metrics trước console.log
+      - `app/reddit_backend/src/index.ts` — content-length cho upload response
+
+14. **Loki Panel 5 duplicate timestamp + Panel 3/6 SQL fix**
+    - **Panel 3 & 6 — SQL syntax error**: Các query có `AND AND "status"` / `AND AND "bytesSent"` (double AND) → gây red exclamation mark. Xoá AND thừa.
+    - **Panel 5 — duplicate timestamp**: `line_format "{{.timestamp}} | {{.ip}}..."` hiển thị ISO timestamp trùng với Grafana timestamp. Xoá `{{.timestamp}} | `.
+    - **Loki data OK**: Promtail vẫn ship logs, data mới nhất tại `09:11:28` có trong Loki.
+    - **Dashboard version**: 64.
+
+15. **Login/logout tracking in Access Logs DB + dedup fix**
+    - **Problem**: Logout chỉ xoá localStorage (client-side, không gọi API). Login không trigger `POST /access-logs`. Dedup key chỉ dùng IP → request từ cùng IP bị dedup dù user khác.
+    - **Fix**:
+      - `accessLogs.ts` — dedup key đổi từ `ip` thành `${ip}:${userId}` để tracking per-user. Khi user logout (userId thay đổi thành null) hoặc login (null → userId mới), mỗi session là key riêng → không bị dedup.
+      - `AuthContext.jsx` — `login()` và `register()` gọi `POST /access-logs` với `x-user-id` của user mới sau khi login/register thành công. `logout()` gọi `POST /access-logs` với userId cũ trước khi clear.
+    - **Result**: DB có trace rõ ràng: `guest → devshare_admin` (login), `devshare_admin → guest` (logout). Test xác nhận: 2 request từ cùng IP với userId khác nhau (null vs valid) đều được ghi vào DB.
+    - **Files changed**:
+      - `app/reddit_backend/src/routes/accessLogs.ts` — dedup key bao gồm userId
+      - `app/reddit_frontend/src/AuthContext.jsx` — POST /access-logs trong login/logout/register
 
 ### Known Issues / Open Items
 - Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.

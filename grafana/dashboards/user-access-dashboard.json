@@ -71,7 +71,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \"ip\" AS \"IP Address\", COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\nGROUP BY \"ip\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
+          "rawSql": "SELECT \"ip\" AS \"IP Address\", COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\nGROUP BY \"ip\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -183,7 +183,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\", '1m') AS \"time\",\n  COUNT(*)::float / 60.0 AS \"req/s\"\n  FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\nGROUP BY \"time\"\nORDER BY \"time\";",
+          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\", '1m') AS \"time\",\n  COUNT(*)::float / 60.0 AS \"req/s\"\n  FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\nGROUP BY \"time\"\nORDER BY \"time\";",
           "refId": "A",
           "sql": {
             "columns": [
@@ -267,7 +267,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"2xx Success\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"status\" >= 200 AND \"status\" < 300;",
+          "rawSql": "SELECT COUNT(*)::int AS \"2xx Success\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" >= 200 AND \"status\" < 300;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -291,7 +291,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"3xx Redirect\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"status\" >= 300 AND \"status\" < 400;",
+          "rawSql": "SELECT COUNT(*)::int AS \"3xx Redirect\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" >= 300 AND \"status\" < 400;",
           "refId": "B",
           "sql": {
             "columns": [
@@ -315,7 +315,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"4xx Client Error\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"status\" >= 400 AND \"status\" < 500;",
+          "rawSql": "SELECT COUNT(*)::int AS \"4xx Client Error\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" >= 400 AND \"status\" < 500;",
           "refId": "C",
           "sql": {
             "columns": [
@@ -339,7 +339,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"5xx Server Error\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"status\" >= 500 AND \"status\" IS NOT NULL;",
+          "rawSql": "SELECT COUNT(*)::int AS \"5xx Server Error\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" >= 500 AND \"status\" IS NOT NULL;",
           "refId": "D",
           "sql": {
             "columns": [
@@ -363,7 +363,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"Unknown (NULL)\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"status\" IS NULL;",
+          "rawSql": "SELECT COUNT(*)::int AS \"Unknown (NULL)\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" IS NULL;",
           "refId": "E",
           "sql": {
             "columns": [
@@ -441,7 +441,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  \"method\" AS \"Method\",\n  \"path\" AS \"Path\",\n  COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" IS NOT NULL\n  AND \"path\" IS NOT NULL\nGROUP BY \"method\", \"path\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
+          "rawSql": "SELECT\n  \"method\" AS \"Method\",\n  \"path\" AS \"Path\",\n  COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"path\" IS NOT NULL\nGROUP BY \"method\", \"path\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -494,7 +494,7 @@
       "pluginVersion": "12.4.1",
       "targets": [
         {
-          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | line_format \"{{.timestamp}} | {{.ip}} | {{.username}} | {{.user_agent}} | {{.method}} {{.path}} -> {{.status}} ({{.duration_ms}}ms)\"",
+          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | line_format \"{{.ip}} | {{.username}} | {{.user_agent}} | {{.method}} {{.path}} -> {{.status}} ({{.duration_ms}}ms)\"",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -568,7 +568,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  \"ip\" AS \"IP Address\",\n  SUM(\"bytesSent\")::bigint AS \"Bytes Sent\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"bytesSent\" IS NOT NULL\nGROUP BY \"ip\"\nORDER BY \"Bytes Sent\" DESC\nLIMIT 10;",
+          "rawSql": "SELECT\n  \"ip\" AS \"IP Address\",\n  SUM(\"bytesSent\")::bigint AS \"Bytes Sent\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"bytesSent\" IS NOT NULL\nGROUP BY \"ip\"\nORDER BY \"Bytes Sent\" DESC\nLIMIT 10;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -622,7 +622,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          \"rawSql\": \"SELECT\\n  al.\\\"createdAt\\\" AS \\\"Access Time\\\",\\n  al.\\\"ip\\\" AS \\\"IP Address\\\",\\n  CASE WHEN al.\\\"username\\\" IS NULL OR al.\\\"username\\\" = 'anonymous' THEN 'Guest' ELSE al.\\\"username\\\" END AS \\\"Username\\\",\\n  al.\\\"userAgent\\\" AS \\\"User Agent\\\"\\nFROM \\\"AccessLog\\\" al\\nWHERE $__timeFilter(al.\\\"createdAt\\\")\\n  AND al.\\\"method\\\" = 'ACCESS'\\nORDER BY al.\\\"createdAt\\\" DESC\\nLIMIT 200;\",
+          "rawSql": "SELECT\n  al.\"createdAt\" AS \"Access Time\",\n  al.\"ip\" AS \"IP Address\",\n  CASE WHEN al.\"username\" IS NULL OR al.\"username\" = 'anonymous' THEN 'Guest' ELSE al.\"username\" END AS \"Username\",\n  al.\"userAgent\" AS \"User Agent\"\nFROM \"AccessLog\" al\nWHERE $__timeFilter(al.\"createdAt\")\n  AND al.\"method\" = 'ACCESS'\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -668,6 +668,6 @@
   "timezone": "browser",
   "title": "User Access Logs",
   "uid": "user-access-dashboard",
-  "version": 62,
+  "version": 64,
   "weekStart": ""
 }

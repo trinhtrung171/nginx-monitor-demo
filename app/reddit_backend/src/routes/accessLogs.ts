@@ -6,15 +6,17 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 30;
 
-// Session dedup: only 1 entry per IP per 60s window
+// Session dedup: only 1 entry per (IP + userId) per 60s window
+// Including userId ensures login/logout transitions are captured
 const visitDedupStore = new Map<string, number>();
 const VISIT_DEDUP_MS = 60_000;
 
-function isDuplicateVisit(ip: string): boolean {
-  const last = visitDedupStore.get(ip);
+function isDuplicateVisit(ip: string, userId: string | null | undefined): boolean {
+  const key = `${ip}:${userId || ''}`;
+  const last = visitDedupStore.get(key);
   const now = Date.now();
   if (last && now - last < VISIT_DEDUP_MS) return true;
-  visitDedupStore.set(ip, now);
+  visitDedupStore.set(key, now);
   return false;
 }
 
@@ -72,7 +74,7 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
       });
 
       // Record visit to AccessLog table (1 row per session, deduped per IP/60s)
-      if (!isDuplicateVisit(ip)) {
+      if (!isDuplicateVisit(ip, finalUserId)) {
         db.accessLog.create({
           data: {
             ip,
