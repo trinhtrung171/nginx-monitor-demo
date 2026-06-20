@@ -6,6 +6,18 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 30;
 
+// Session dedup: only 1 entry per IP per 60s window
+const visitDedupStore = new Map<string, number>();
+const VISIT_DEDUP_MS = 60_000;
+
+function isDuplicateVisit(ip: string): boolean {
+  const last = visitDedupStore.get(ip);
+  const now = Date.now();
+  if (last && now - last < VISIT_DEDUP_MS) return true;
+  visitDedupStore.set(ip, now);
+  return false;
+}
+
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = rateLimitStore.get(ip);
@@ -23,6 +35,9 @@ setInterval(() => {
   const now = Date.now();
   for (const [ip, entry] of rateLimitStore) {
     if (now > entry.resetAt) rateLimitStore.delete(ip);
+  }
+  for (const [ip, ts] of visitDedupStore) {
+    if (now - ts > VISIT_DEDUP_MS) visitDedupStore.delete(ip);
   }
 }, 5 * 60_000);
 
@@ -55,6 +70,23 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
       appAccessCounter.add(1, {
         user_type: finalUserId ? "member" : "guest"
       });
+
+      // Record visit to AccessLog table (1 row per session, deduped per IP/60s)
+      if (!isDuplicateVisit(ip)) {
+        db.accessLog.create({
+          data: {
+            ip,
+            userId: finalUserId,
+            username,
+            userAgent: userAgent || '',
+            method: 'ACCESS',
+            path: '/',
+            status: 200,
+            durationMs: 0,
+            bytesSent: 0,
+          },
+        }).catch((err: unknown) => console.error('Failed to write visit access log:', err));
+      }
 
       return { success: true };
     } catch (e) {

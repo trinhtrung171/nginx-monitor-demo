@@ -75,14 +75,10 @@ export function registerAccessLogger(app: Elysia) {
         user_agent: userAgent,
       };
 
-      console.log(JSON.stringify(logEntry));
+      const skipPaths = ['/metrics', '/health'];
+      if (skipPaths.includes(activePath)) return;
 
-      const skipDb = ['/metrics', '/health'];
-      if (!skipDb.includes(activePath)) {
-        db.accessLog.create({
-          data: { ip, userId, username, userAgent, method, path: activePath, status, durationMs: duration_ms, bytesSent },
-        }).catch(() => {});
-      }
+      console.log(JSON.stringify(logEntry));
     } catch (err) {
       startTimes.delete(request);
       console.error('Failed to write access log:', err);

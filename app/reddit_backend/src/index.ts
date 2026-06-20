@@ -68,6 +68,7 @@ app
       return new Response(media.data, {
         headers: {
           'content-type': media.mimeType,
+          'content-length': String(media.data.byteLength || media.data.length || 0),
           'cache-control': 'public, max-age=31536000',
         },
       });

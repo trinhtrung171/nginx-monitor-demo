@@ -142,3 +142,26 @@ curl -s http://localhost:3001/posts/
 # View grafana
 open http://localhost:3000
 ```
+
+### Session: June 20, 2026
+
+13. **Full User Access Logs Dashboard Audit + Fix**
+   - **Audit result**: Duyệt chi tiết 7 panels, phát hiện và fix 6 issues:
+     - **Panel 3 (HTTP Status Dist) — CRITICAL**: Query D thiếu `AND "status" IS NOT NULL` (9 rows NULL status biến mất khỏi pie chart). Thêm Query E: `SELECT COUNT(*)::int AS "Unknown (NULL)"`.
+     - **Panel 7 (Access Logs DB) — Username**: `COALESCE(username, 'Guest')` không xử lý `'anonymous'`. Đổi thành `CASE WHEN username IS NULL OR username = 'anonymous' THEN 'Guest'`.
+     - **Panel 7 — "Device" alias sai**: `userAgent AS "Device"` gây hiểu nhầm (Blackbox-Exporter != device). Đổi thành `"User Agent"`.
+     - **Panel 7 — Layout gap**: y=32 → y=25 (xoá khoảng trống 7 units sau Panel 6).
+     - **Panel 5 — Loki filter redundant**: Xoá `| path != "/metrics"` (đã filter ở source).
+     - **Dashboard tags**: Thêm "loki", "monitoring".
+   - **Loki data loss fix confirmed**: Filter `/metrics` từ `console.log` ở `access-logger.ts:78-79` hoạt động. Loki hiển thị data sau khi có traffic local.
+   - **bytesSent fix**: Thêm `'content-length'` header vào `new Response(media.data)` ở `index.ts` giúp `computeBytesSent()` detect đúng kích thước file upload.
+   - **Dashboard version**: 62 (đã restart Grafana).
+   - **Files changed**:
+     - `grafana/dashboards/user-access-dashboard.json` — 5 panel fixes
+     - `app/reddit_backend/src/access-logger.ts` — skip /metrics trước console.log
+     - `app/reddit_backend/src/index.ts` — content-length cho upload response
+
+### Known Issues / Open Items
+- Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.
+- `computeBytesSent()` vẫn trả về 0 cho `Elysia-set` response objects (không có content-length header từ Elysia). Chỉ fix cho `new Response()` với data buffer.
+- 9 rows có NULL method/path/status trong Neon — 0.7% data corruption, root cause chưa được xác định.
