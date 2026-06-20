@@ -206,10 +206,16 @@ open http://localhost:3000
 
 19. **Filter non-browser traffic + Render health checks (UA heuristic)**
     - **Problem**: curl, HTTP libs, và Render Browser Health Checks đều lọt log dù x-client-ip có hoặc không.
-    - **Fix**: `isRealUserRequest()` kiểm tra `(KHTML, like Gecko)` trong UA (chỉ browser thật mới có) + `HeadlessChrome` (Render synthetic).
-    - **Result**: Chỉ request từ trình duyệt thật (Chrome, Firefox, Safari, Edge) mới được log. Curl, API clients, HeadlessChrome đều skip.
+    - **Fix**: `isRealUserRequest()` kiểm tra `(KHTML, like Gecko)` + `Chrome/` + `Safari/537.36` + `AppleWebKit/537.36` trong UA + `HeadlessChrome` (Render synthetic).
+    - **Result**: Chỉ request từ Chrome/Safari/Edge browser thật mới được log. Curl, API clients, Firefox, HeadlessChrome đều skip.
     - **Files changed**:
-      - `app/reddit_backend/src/access-logger.ts` — UA heuristic trong isRealUserRequest()
+      - `app/reddit_backend/src/access-logger.ts` — UA heuristic chi tiết hơn
+
+20. **Dashboard: Extract device/platform from User-Agent**
+    - **Problem**: Panel 7 hiển thị full UA string, quá dài.
+    - **Fix**: Dùng `substring(userAgent from '\(([^)]+)\)')` để chỉ lấy phần platform (VD: `Windows NT 10.0; Win64; x64`).
+    - **Files changed**:
+      - `grafana/dashboards/user-access-dashboard.json` — SQL regex cho Device
 
 ### Known Issues / Open Items
 - Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.

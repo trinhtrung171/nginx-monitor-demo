@@ -622,7 +622,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  al.\"createdAt\" AS \"Access Time\",\n  al.\"ip\" AS \"IP Address\",\n  CASE WHEN al.\"username\" IS NULL OR al.\"username\" = 'anonymous' THEN 'Guest' ELSE al.\"username\" END AS \"Username\",\n  al.\"userAgent\" AS \"User Agent\"\nFROM \"AccessLog\" al\nWHERE $__timeFilter(al.\"createdAt\")\n  AND al.\"method\" = 'ACCESS'\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;",
+          "rawSql": "SELECT\n  al.\"createdAt\" AS \"Access Time\",\n  al.\"ip\" AS \"IP Address\",\n  CASE WHEN al.\"username\" IS NULL OR al.\"username\" = 'anonymous' THEN 'Guest' ELSE al.\"username\" END AS \"Username\",\n  substring(al.\"userAgent\" from '\(([^)]+)\)') AS \"Device\"\nFROM \"AccessLog\" al\nWHERE $__timeFilter(al.\"createdAt\")\n  AND al.\"method\" = 'ACCESS'\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;",
           "refId": "A",
           "sql": {
             "columns": [
