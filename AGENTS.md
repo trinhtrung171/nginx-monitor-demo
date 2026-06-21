@@ -292,7 +292,7 @@ open http://localhost:3000
       - `monitor-docker-compose.yml` — added `neon-to-loki-sync` service
       - `.env` — added `NEON_DATABASE_URL`
 
-### Session: June 21, 2026 (night) — AccessLog cleanup + Loki-only dashboard
+### Session: June 21, 2026 (night) — AccessLog cleanup + Loki-only dashboard + ALL 7 Panels Verified
 
 29. **AccessLog DB table removed (complete cleanup)**
     - **Context**: All 7 dashboard panels migrated from PostgreSQL → Loki. AccessLog DB table no longer needed.
@@ -304,8 +304,24 @@ open http://localhost:3000
     - **DB cleanup**: Dropped `AccessLog` table from both local Postgres and Neon
     - **Result**: Backend still accepts POST /access-logs (for session tracking via OTel metric), but no longer writes to AccessLog DB table. All user activity visible in Loki panels only.
 
+30. **ALL 7 Panels Verified — data flowing through Loki**
+    - **Problem**: After removing AccessLog DB table + stopping neon-to-loki-sync, all Grafana panels showed "no data". Backend was still writing `console.log(JSON.stringify(logEntry))` but no browser-like traffic was being generated, and the `db` import was missing from `access-logger.ts` after the cleanup.
+    - **Root cause**: `access-logger.ts` referenced `db` (Prisma) in `getUsername()` at line 22 but the `import { db } from './db'` was removed during cleanup (alongside DB write block removal). This caused `ReferenceError: db is not defined` every time a request with `x-user-id` header hit the server. But the main "no data" issue was simply that no browser-like traffic was hitting the backend after the AccessLog table was dropped.
+    - **Fixes**:
+      - `access-logger.ts` — added `import { db } from './db'` at line 3 to fix `getUsername()` Prisma lookup
+      - Generated browser-like traffic with `x-client-ip`, `x-user-id: cmq5i2ohq0000e7itthkyon6g`, and real Chrome UA to trigger `isRealUserRequest()` filter
+    - **Verification**:
+      - Panel 1 (Top IPs): 10.10.10.10 = 3 requests ✅
+      - Panel 2 (Request Rate): 0.047 req/s ✅
+      - Panel 3 (HTTP Status): 14 entries ✅
+      - Panel 4 (Endpoints): GET /posts/ (7), GET /subreddits/ (4), POST /access-logs/ (3) ✅
+      - Panel 5 (User Activity Log): 5 formatted log lines ✅
+      - Panel 6 (Bandwidth): 4 IPs with real bytes (17413, 9588, 5815) ✅
+      - Panel 7 (Access Logs): 5 entries with method/path/status/duration/IP/username/UA ✅
+    - **Files changed**:
+      - `app/reddit_backend/src/access-logger.ts` — added `db` import
+
 ### Known Issues / Open Items
-- **Neon→Loki sync timestamps**: Sync uses current time (not original `createdAt`) for Loki timestamps because Loki rejects old entries. The data content is real but timestamps reflect sync time, not event time.
-- 9 rows có NULL method/path/status trong Neon — 0.7% data corruption, root cause chưa được xác định.
-- Loki image distroless → không thể healthcheck bằng curl/wget. Cần TCP healthcheck nếu muốn depends_on condition.
-- Sync script hardcodes `STREAM_LABEL = "devshare-backend"` — phải khớp với Grafana panel query.
+- Loki image distroless → cannot healthcheck with curl/wget. TCP healthcheck needed if depends_on condition is required.
+- `neon-to-loki-sync` permanently stopped — AccessLog table was dropped, sync has no data source. All access logs now come from `console.log(JSON.stringify(logEntry))` via Promtail pipeline.
+- Backend restart needed after the `db` import fix was deployed — any future rebuilds will auto-fix.

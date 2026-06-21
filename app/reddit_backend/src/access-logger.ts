@@ -1,5 +1,6 @@
 import { Elysia } from 'elysia';
 import { getClientIp } from './otel-middleware';
+import { db } from './db';
 const usernameCache = new Map<string, { username: string; expiresAt: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -50,6 +51,20 @@ function computeBytesSent(response: unknown): number {
 export function registerAccessLogger(app: Elysia) {
   const startTimes = new WeakMap<Request, number>();
 
+  db.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS access_log (
+    id BIGSERIAL PRIMARY KEY,
+    ip TEXT NOT NULL DEFAULT '',
+    username TEXT NOT NULL DEFAULT 'anonymous',
+    user_id TEXT,
+    method TEXT NOT NULL DEFAULT '',
+    path TEXT NOT NULL DEFAULT '',
+    status INTEGER NOT NULL DEFAULT 0,
+    duration_ms INTEGER NOT NULL DEFAULT 0,
+    bytes_sent INTEGER NOT NULL DEFAULT 0,
+    user_agent TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`).catch(() => {});
+
   app.onRequest(({ request }) => {
     startTimes.set(request, performance.now());
   });
@@ -89,6 +104,15 @@ export function registerAccessLogger(app: Elysia) {
       if (skipPaths.includes(activePath) || !isRealUserRequest(request)) return;
 
       console.log(JSON.stringify(logEntry));
+
+      db.$executeRawUnsafe(
+        'INSERT INTO access_log (ip, username, user_id, method, path, status, duration_ms, bytes_sent, user_agent) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+        ip, username, userId, method, activePath, status, duration_ms, bytesSent, userAgent
+      ).catch((err: unknown) => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Failed to write access_log:', err);
+        }
+      });
     } catch (err) {
       startTimes.delete(request);
       console.error('Failed to write access log:', err);

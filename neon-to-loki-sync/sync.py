@@ -34,18 +34,18 @@ def write_cursor(ts: str) -> None:
 def query_neon(last_sync: str) -> list[dict]:
     sql = f"""SELECT row_to_json(t)::text FROM (
         SELECT
-            "createdAt"::timestamptz AS ts,
-            COALESCE("ip", '') AS ip,
-            COALESCE("username", 'anonymous') AS username,
-            COALESCE("userAgent", '') AS user_agent,
-            COALESCE("method", '') AS method,
-            COALESCE("path", '') AS path,
-            "status",
-            "durationMs" AS duration_ms,
-            "bytesSent" AS bytes_sent
-        FROM "AccessLog"
-        WHERE "createdAt" > '{last_sync}'::timestamptz
-        ORDER BY "createdAt" ASC
+            created_at::timestamptz AS ts,
+            COALESCE(ip, '') AS ip,
+            COALESCE(username, 'anonymous') AS username,
+            COALESCE(user_agent, '') AS user_agent,
+            COALESCE(method, '') AS method,
+            COALESCE(path, '') AS path,
+            status,
+            duration_ms,
+            bytes_sent
+        FROM access_log
+        WHERE created_at > '{last_sync}'::timestamptz
+        ORDER BY created_at ASC
         LIMIT {BATCH_SIZE}
     ) t;"""
 
