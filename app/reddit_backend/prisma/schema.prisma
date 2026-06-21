@@ -36,7 +36,6 @@ model User {
   notificationsReceived  Notification[] @relation("UserNotifications")
   notificationsTriggered Notification[] @relation("NotificationActor")
   bookmarks              Bookmark[]
-  accessLogs             AccessLog[]
 }
 
 model Subreddit {
@@ -183,18 +182,4 @@ model Media {
   createdAt DateTime @default(now())
 }
 
-model AccessLog {
-  id         String   @id @default(cuid())
-  ip         String
-  userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  username   String?
-  userAgent  String?
-  method     String?
-  path       String?
-  status     Int?
-  durationMs Int?
-  bytesSent  Int?
-  createdAt  DateTime @default(now())
-}
 

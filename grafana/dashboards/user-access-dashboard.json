@@ -22,8 +22,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres-neon"
+        "type": "loki",
+        "uid": "devshare-loki"
       },
       "fieldConfig": {
         "defaults": {
@@ -69,27 +69,10 @@
       "targets": [
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT \"ip\" AS \"IP Address\", COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\nGROUP BY \"ip\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "topk(10, sum by (ip) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | ip != \"\" and username != \"anonymous\" and method != \"ACCESS\" [$__range])))",
+          "legendFormat": "{{ ip }}",
+          "queryType": "instant",
+          "refId": "A"
         }
       ],
       "title": "Top 10 IP Addresses",
@@ -97,8 +80,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres-neon"
+        "type": "loki",
+        "uid": "devshare-loki"
       },
       "fieldConfig": {
         "defaults": {
@@ -181,27 +164,10 @@
       "targets": [
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\", '1m') AS \"time\",\n  COUNT(*)::float / 60.0 AS \"req/s\"\n  FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\nGROUP BY \"time\"\nORDER BY \"time\";",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "sum(rate({service_name=\"devshare-backend\"} | json | __error__=\"\" | method != \"ACCESS\" [$__interval]))",
+          "legendFormat": "req/s",
+          "queryType": "range",
+          "refId": "A"
         }
       ],
       "title": "Request Rate (req/s)",
@@ -209,8 +175,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres-neon"
+        "type": "loki",
+        "uid": "devshare-loki"
       },
       "fieldConfig": {
         "defaults": {
@@ -265,123 +231,38 @@
       "targets": [
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"2xx Success\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" >= 200 AND \"status\" < 300;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | method != \"ACCESS\" and status >= 200 and status < 300 [$__range]))",
+          "legendFormat": "2xx Success",
+          "queryType": "instant",
+          "refId": "A"
         },
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"3xx Redirect\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" >= 300 AND \"status\" < 400;",
-          "refId": "B",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | method != \"ACCESS\" and status >= 300 and status < 400 [$__range]))",
+          "legendFormat": "3xx Redirect",
+          "queryType": "instant",
+          "refId": "B"
         },
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"4xx Client Error\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" >= 400 AND \"status\" < 500;",
-          "refId": "C",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | method != \"ACCESS\" and status >= 400 and status < 500 [$__range]))",
+          "legendFormat": "4xx Client Error",
+          "queryType": "instant",
+          "refId": "C"
         },
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"5xx Server Error\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" >= 500 AND \"status\" IS NOT NULL;",
-          "refId": "D",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | method != \"ACCESS\" and status >= 500 [$__range]))",
+          "legendFormat": "5xx Server Error",
+          "queryType": "instant",
+          "refId": "D"
         },
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*)::int AS \"Unknown (NULL)\" FROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"status\" IS NULL;",
-          "refId": "E",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "sum(count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | method != \"ACCESS\" and (status < 100 or status = \"\" ) [$__range]))",
+          "legendFormat": "Unknown (NULL)",
+          "queryType": "instant",
+          "refId": "E"
         }
       ],
       "title": "HTTP Status Distribution",
@@ -389,8 +270,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres-neon"
+        "type": "loki",
+        "uid": "devshare-loki"
       },
       "fieldConfig": {
         "defaults": {
@@ -439,27 +320,10 @@
       "targets": [
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  \"method\" AS \"Method\",\n  \"path\" AS \"Path\",\n  COUNT(*)::int AS \"Requests\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"method\" = 'ACCESS'\n  AND \"path\" IS NOT NULL\nGROUP BY \"method\", \"path\"\nORDER BY \"Requests\" DESC\nLIMIT 10;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "topk(10, sum by (method, path) (count_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | method != \"ACCESS\" and path != \"\" [$__range])))",
+          "legendFormat": "{{ method }} {{ path }}",
+          "queryType": "instant",
+          "refId": "A"
         }
       ],
       "title": "Most Called Endpoints",
@@ -505,8 +369,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres-neon"
+        "type": "loki",
+        "uid": "devshare-loki"
       },
       "fieldConfig": {
         "defaults": {
@@ -534,22 +398,9 @@
               }
             ]
           },
-          "unit": "decbytes"
+          "unit": "bytes"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Bytes Sent"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 160
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 6,
@@ -566,27 +417,10 @@
       "targets": [
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  \"ip\" AS \"IP Address\",\n  SUM(\"bytesSent\")::bigint AS \"Bytes Sent\"\nFROM \"AccessLog\"\nWHERE $__timeFilter(\"createdAt\")\n  AND \"bytesSent\" IS NOT NULL AND \"bytesSent\" > 0\nGROUP BY \"ip\"\nORDER BY \"Bytes Sent\" DESC\nLIMIT 10;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "topk(10, sum by (ip) (sum_over_time({service_name=\"devshare-backend\"} | json | __error__=\"\" | method != \"ACCESS\" | unwrap bytes_sent [$__range])))",
+          "legendFormat": "{{ ip }}",
+          "queryType": "instant",
+          "refId": "A"
         }
       ],
       "title": "Bandwidth per IP (bytes sent)",
@@ -594,8 +428,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "devshare-postgres-neon"
+        "type": "loki",
+        "uid": "devshare-loki"
       },
       "fieldConfig": {
         "defaults": {},
@@ -608,43 +442,28 @@
         "y": 25
       },
       "id": 7,
-      "pluginVersion": "12.4.1",
       "options": {
-        "cellHeight": "sm",
-        "showHeader": true,
-        "footer": {
-          "reducers": [],
-          "show": false
-        }
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "showControls": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "unwrappedColumns": false,
+        "wrapLogMessage": false
       },
+      "pluginVersion": "12.4.1",
       "targets": [
         {
           "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  al.\"createdAt\" AS \"Access Time\",\n  al.\"ip\" AS \"IP Address\",\n  CASE WHEN al.\"username\" IS NULL OR al.\"username\" = 'anonymous' THEN 'Guest' ELSE al.\"username\" END AS \"Username\",\n  substring(al.\"userAgent\" from '\(([^)]+)\)') AS \"Device\"\nFROM \"AccessLog\" al\nWHERE $__timeFilter(al.\"createdAt\")\n  AND al.\"method\" = 'ACCESS'\nORDER BY al.\"createdAt\" DESC\nLIMIT 200;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
+          "expr": "{service_name=\"devshare-backend\"} | json | __error__=\"\" | method != \"ACCESS\" | line_format \"{{.ip}} | {{.username}} | {{.method}} {{.path}} → {{.status}} ({{.duration_ms}}ms • {{.bytes_sent}}B)\"",
+          "legendFormat": "",
+          "queryType": "range",
+          "refId": "A"
         }
       ],
-      "title": "Access Logs (Database)",
-      "type": "table"
+      "title": "Access Logs (Loki)",
+      "type": "logs"
     }
   ],
   "preload": false,
@@ -653,13 +472,9 @@
   "tags": [
     "access-log",
     "user",
-    "postgresql",
     "loki",
     "monitoring"
   ],
-  "templating": {
-    "list": []
-  },
   "time": {
     "from": "now-30m",
     "to": "now"
@@ -668,6 +483,6 @@
   "timezone": "browser",
   "title": "User Access Logs",
   "uid": "user-access-dashboard",
-  "version": 65,
+  "version": 69,
   "weekStart": ""
 }

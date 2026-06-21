@@ -1,13 +1,7 @@
 import { Elysia } from 'elysia';
 import { getClientIp } from './otel-middleware';
-import { db } from './db';
-
 const usernameCache = new Map<string, { username: string; expiresAt: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
-
-// Rate-limit DB writes from middleware (1 per IP per 60s)
-const dbWriteTimestamps = new Map<string, number>();
-const DB_WRITE_INTERVAL_MS = 60_000;
 
 // Only real Chrome/Safari-based browsers have this UA pattern
 // HeadlessChrome = Render browser health check (Playwright/Puppeteer synthetic monitoring)
@@ -95,25 +89,6 @@ export function registerAccessLogger(app: Elysia) {
       if (skipPaths.includes(activePath) || !isRealUserRequest(request)) return;
 
       console.log(JSON.stringify(logEntry));
-
-      // Also write to DB (1 entry per IP per 60s) so Bandwidth and IP panels have real data
-      const lastWrite = dbWriteTimestamps.get(ip) || 0;
-      if (Date.now() - lastWrite >= DB_WRITE_INTERVAL_MS) {
-        dbWriteTimestamps.set(ip, Date.now());
-        db.accessLog.create({
-          data: {
-            ip,
-            userId,
-            username,
-            userAgent: userAgent || '',
-            method,
-            path: activePath,
-            status,
-            durationMs: duration_ms,
-            bytesSent,
-          },
-        }).catch((err: unknown) => console.error('Failed to write middleware access log to DB:', err));
-      }
     } catch (err) {
       startTimes.delete(request);
       console.error('Failed to write access log:', err);

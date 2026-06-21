@@ -7,9 +7,9 @@ Monitor Nginx with Docker Compose stack: Nginx → Backend (Bun/Elysia) → Post
 
 - **Frontend**: Dual env — `.env.development` → `VITE_API_URL=http://localhost:8080` (local dev), `.env.production` → `VITE_API_URL=https://nginx-monitor-demo.onrender.com` (build/deploy)
 - **Dual Database**: Local Docker Postgres (`devshare-db:5432`, uid `devshare-postgres-local`) vs Neon cloud (uid `devshare-postgres-neon`)
-- **Grafana Dashboard**: User Access Logs has `$ds_postgres` variable to switch between local and Neon Postgres datasources
+- **Grafana Dashboard**: User Access Logs uses Loki datasource (`devshare-loki`) exclusively — no PostgreSQL queries
 - **Render Backend**: Exposes `/metrics` via prom-client, scraped by local Prometheus (`render-backend` job). Writes access logs to Neon DB.
-- **Local Backend**: Exports OTel metrics → OTel Collector → Prometheus:8889, plus own `/metrics` (prom-client, scraped by `devshare-backend` job). Writes access logs to local Postgres.
+- **Local Backend**: Exports OTel metrics → OTel Collector → Prometheus:8889, plus own `/metrics` (prom-client, scraped by `devshare-backend` job). Writes access logs to Loki via console.log → Promtail.
 - **Uploads**: Stored in DB via `Media` Prisma model (persists across restarts on Render); filesystem fallback exists
 
 ## Session: June 18, 2026
@@ -108,12 +108,12 @@ Monitor Nginx with Docker Compose stack: Nginx → Backend (Bun/Elysia) → Post
 - `app/reddit_backend/src/db.ts` — DB metrics instrumentation (OTel + prom-client)
 - `app/reddit_backend/src/otel-middleware.ts` — OTel metrics + `getClientIp()`
 - `app/reddit_backend/src/access-logger.ts` — access logging (Loki + DB), username resolution
-- `app/reddit_backend/prisma/schema.prisma` — Media model, AccessLog model
+- `app/reddit_backend/prisma/schema.prisma` — Media model (no more AccessLog model)
 - `app/reddit_backend/Dockerfile` — prisma db push in CMD
 - `app/reddit_frontend/.env.development` — `VITE_API_URL=http://localhost:8080`
 - `app/reddit_frontend/.env.production` — `VITE_API_URL=https://nginx-monitor-demo.onrender.com`
 - `grafana/provisioning/datasources/postgres-neon.yml` — Neon cloud datasource
-- `grafana/dashboards/user-access-dashboard.json` — User Access Logs (has `$ds_postgres` variable)
+- `grafana/dashboards/user-access-dashboard.json` — User Access Logs (all Loki, no `ds_postgres`)
 - `grafana/dashboards/application-dashboard.json` — Application — API Performance
 - `grafana/dashboards/database-dashboard.json` — Database Queries
 
@@ -217,7 +217,95 @@ open http://localhost:3000
     - **Files changed**:
       - `grafana/dashboards/user-access-dashboard.json` — SQL regex cho Device
 
+### Session: June 21, 2026 (continued)
+
+25. **User Access Logs audit — method='ACCESS' filter bug**
+    - **Problem**: Tất cả SQL panels lọc `method = 'ACCESS'` → chỉ show session ping entries (`ACCESS / 200 0ms` từ `POST /access-logs`), KHÔNG show real HTTP request data (`GET /posts/ 200 42ms`). `method='ACCESS'` chỉ là heartbeat/session log, không phải HTTP request thật của user.
+    - **Panels bị ảnh hưởng (6/7)**: Top 10 IPs, Request Rate, HTTP Status, Most Called Endpoints, Bandwidth, Access Logs DB.
+    - **Fix**: Đổi all queries từ `method = 'ACCESS'` → `method != 'ACCESS'`. Panel 3 (HTTP Status) gộp 5 query riêng thành 1 CASE query.
+    - **Files changed**:
+      - `grafana/dashboards/user-access-dashboard.json` — user-access-dashboard-test.json
+
+26. **TEST Neon Dashboard deleted + clone for testing**
+    - Xoá dashboard `TEST Neon Dashboard` (uid: test-neon-dashboard) qua Grafana API.
+    - Clone `user-access-dashboard.json` → `user-access-dashboard-test.json`.
+    - **Fixes applied to test dashboard**:
+      1. **Panel 3**: 5 separate COUNT queries → 1 query với `CASE WHEN status ... GROUP BY 1` — 1 round-trip, đúng format piechart
+      2. **Datasource default**: `devshare-postgres-neon` → `devshare-postgres-local` (tránh vô tình query production)
+      3. **Panel 1 + Panel 6**: Thêm `method != 'ACCESS'` (đồng nhất với các panel khác)
+      4. **Default time range**: `now-30m` → `now-6h` (đủ data cho traffic thấp)
+      5. **Panel 7 device**: Chưa fix — cần parse ở tầng app (ua-parser-js) mới đúng
+    - **Files changed**:
+      - `grafana/dashboards/user-access-dashboard-test.json` — new test dashboard
+
+21. **Dashboard audit — all metrics verified**
+    - Audited all 3 Grafana dashboards (Application — API Performance, Database Queries, User Access Logs).
+    - Every PromQL/SQL/Loki query references metrics/fields/tables that exist.
+    - **Application dashboard**: `http_server_requests_total`, `http_server_duration_milliseconds_bucket`, `process_cpu_usage`, `process_memory_usage_bytes`, `app_errors_total`, `probe_success{job="blackbox"}`, `nginx_connections_active`, `nginx_connections_waiting`, `nginx_http_requests_total` — all have data from Render + local jobs.
+    - **Database dashboard**: `db_queries_total`, `db_query_duration_milliseconds_sum/_count`, `slow_query_total` — dual-instrumented via prom-client + OTel.
+    - **User Access Logs**: All 7 panels verified with correct Grafana variables (`$ds_postgres`, `$ip`, `$method`, `$status`).
+
+22. **No redundant CPU/RAM panels**
+    - Application Dashboard → `process_cpu_usage` / `process_memory_usage_bytes` (per-process, from app's `/metrics`).
+    - Infrastructure Dashboard → `node_cpu_seconds_total` / `node_memory_MemTotal_bytes` (host-level, from node-exporter).
+    - Different scope → both needed, no redundancy.
+
+23. **Promtail down → User Activity Log no data (fixed)**
+    - **Root cause**: `promtail` container was down for ~4h (containers restart after Docker config changes).
+    - **Fix**: `docker compose -f monitor-docker-compose.yml restart promtail` → logs flow again.
+    - **Lesson**: Always check Promtail/agent status when log panels go dark.
+
+24. **Live Slow Query Log formatting (database-dashboard.json)**
+    - **Problem**: Panel 7 showed raw JSON (`{"duration_ms":13.0669...,"query":"SELECT...","type":"slow_query"}`) — hard to read.
+    - **Fix**: Added `| json | __error__="" | line_format "⏱ {{ .duration_ms | substr 0 6 }}ms\n{{ .query }}"` — splits duration and SQL on separate lines, truncates precision.
+    - **Verified via Loki API**: Output now renders as `⏱ 13.066ms\nSELECT ...` — much more readable.
+    - **Added `timezone: "Asia/Ho_Chi_Minh"`** to dashboard JSON for local time display.
+    - **Dashboard version**: 3.
+    - **Files changed**:
+      - `grafana/dashboards/database-dashboard.json` — Panel 7 expr + timezone
+
+### Session: June 21, 2026 (afternoon)
+
+27. **Loki panel (User Activity Log) no data — Promtail DNS failure**
+    - **Symptom**: Test dashboard Panel 5 (User Activity Log, Loki) showed no data. All PostgreSQL panels (`ds_postgres`) had data.
+    - **Root cause**: `promtail` không thể resolve hostname `loki` (`dial tcp: lookup loki on 127.0.0.11:53: no such host`) + Loki returned `empty ring` errors. Promtail bị restart nhiều lần (Docker compose changes), mất vị trí cursor → logs cũ không bao giờ được ship.
+    - **Evidence**: Promtail logs show `error sending batch` + `no such host` at 04:42 UTC. Chỉ 11 log entries total trong Loki (từ sau restart gần nhất), trong đó có 1 access log duy nhất.
+    - **Fix**: Tách healthcheck ra khỏi `monitor-docker-compose.yml` (Loki image không có curl/wget/shell → healthcheck luôn fail). Restart promtail. Tạo traffic test (5+ request browser-like) → verify data flow OK.
+    - **Result**: Loki có 10 access log entries, pipeline working.
+    - **Lesson**: Loki image `grafana/loki:latest` is distroless (không có curl/wget/shell) → không thể dùng HTTP healthcheck với `CMD`. Dùng TCP healthcheck hoặc bỏ qua (promtail có built-in retry).
+    - **Files changed**:
+      - `monitor-docker-compose.yml` — xoá loki healthcheck + promtail depends_on (gây start loop)
+      - `grafana/dashboards/user-access-dashboard-test.json` — xác nhận loki panel hiển thị data
+
+### Session: June 21, 2026 (evening) — Neon→Loki sync
+
+28. **Neon→Loki sync: Production user activity in local Loki panel**
+    - **Problem**: Loki panel (User Activity Log) chỉ có data từ local Docker backend (Promtail ship). Render backend (production) never ships to local Loki — chỉ ghi vào Neon DB. Grafana Loki panel luôn trống với production user data.
+    - **Solution**: Created `neon-to-loki-sync/sync.py` — Python script queries Neon `AccessLog` table, pushes JSON log lines to Loki via HTTP API every 15s. Real IPs/usernames/device data từ Neon DB được sync vào Loki với labels `service_name="devshare-backend"` và `username`.
+    - **Root cause (Loki invisible data)**: Loki (distroless, no config) từ chối old timestamps (June 14-19) vì out-of-order detection. Sync đã push thành công (HTTP 204) nhưng data không query được.
+    - **Fix**: Sync script uses `time.time_ns()` (current time) instead of original `createdAt` from Neon. Data content (IP, username, path, method, status) remains real — only timestamp reflects sync time.
+    - **Result**: Loki panel shows all 7 usernames (Sybau, test01-04, guest, anonymous) with real IPs (118.68.46.7 Vietnam, 116.96.44.197, etc.) and real HTTP requests (GET /subreddits/, POST /access-logs/, etc.).
+    - **Sync stats**: 1,683 entries from Neon pushed as 7 streams (one per username), 26 unique IPs.
+    - **Files changed**:
+      - `neon-to-loki-sync/sync.py` — new sync script (Python, psql + Loki push API)
+      - `neon-to-loki-sync/Dockerfile` — new `python:3-alpine` + `postgresql-client` image
+      - `monitor-docker-compose.yml` — added `neon-to-loki-sync` service
+      - `.env` — added `NEON_DATABASE_URL`
+
+### Session: June 21, 2026 (night) — AccessLog cleanup + Loki-only dashboard
+
+29. **AccessLog DB table removed (complete cleanup)**
+    - **Context**: All 7 dashboard panels migrated from PostgreSQL → Loki. AccessLog DB table no longer needed.
+    - **Changes**:
+      - `schema.prisma` — removed `AccessLog` model + relation from User
+      - `access-logger.ts` — removed DB write block (was appending to AccessLog table with 1/IP/60s rate limit)
+      - `routes/accessLogs.ts` — removed GET /access-logs handler, removed DB write from POST handler (only OTel metric + rate limiting remain)
+      - `index.ts` — no change needed (route still mounted for session ping)
+    - **DB cleanup**: Dropped `AccessLog` table from both local Postgres and Neon
+    - **Result**: Backend still accepts POST /access-logs (for session tracking via OTel metric), but no longer writes to AccessLog DB table. All user activity visible in Loki panels only.
+
 ### Known Issues / Open Items
-- Render backend không gửi logs đến Loki local (chỉ có backend local mới có Loki data). User Activity Log panel chỉ có data khi có traffic local.
-- `computeBytesSent()` vẫn trả về 0 cho `Elysia-set` response objects (không có content-length header từ Elysia). Chỉ fix cho `new Response()` với data buffer.
+- **Neon→Loki sync timestamps**: Sync uses current time (not original `createdAt`) for Loki timestamps because Loki rejects old entries. The data content is real but timestamps reflect sync time, not event time.
 - 9 rows có NULL method/path/status trong Neon — 0.7% data corruption, root cause chưa được xác định.
+- Loki image distroless → không thể healthcheck bằng curl/wget. Cần TCP healthcheck nếu muốn depends_on condition.
+- Sync script hardcodes `STREAM_LABEL = "devshare-backend"` — phải khớp với Grafana panel query.

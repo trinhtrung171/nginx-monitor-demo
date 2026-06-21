@@ -1,24 +1,10 @@
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
 import { db } from "../db";
 import { getClientIp, appAccessCounter } from "../otel-middleware";
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 30;
-
-// Session dedup: only 1 entry per (IP + userId) per 60s window
-// Including userId ensures login/logout transitions are captured
-const visitDedupStore = new Map<string, number>();
-const VISIT_DEDUP_MS = 60_000;
-
-function isDuplicateVisit(ip: string, userId: string | null | undefined): boolean {
-  const key = `${ip}:${userId || ''}`;
-  const last = visitDedupStore.get(key);
-  const now = Date.now();
-  if (last && now - last < VISIT_DEDUP_MS) return true;
-  visitDedupStore.set(key, now);
-  return false;
-}
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -38,16 +24,12 @@ setInterval(() => {
   for (const [ip, entry] of rateLimitStore) {
     if (now > entry.resetAt) rateLimitStore.delete(ip);
   }
-  for (const [ip, ts] of visitDedupStore) {
-    if (now - ts > VISIT_DEDUP_MS) visitDedupStore.delete(ip);
-  }
 }, 5 * 60_000);
 
 export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
-  // POST /access-logs - Record a new access log when the app is opened
+  // POST /access-logs - Record a session ping
   .post("/", async ({ request, headers, set }) => {
     const userId = headers["x-user-id"];
-    const userAgent = request.headers.get("user-agent");
     const ip = getClientIp(request);
     if (!checkRateLimit(ip)) {
       set.status = 429;
@@ -68,80 +50,14 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
       }
 
       // Record OpenTelemetry Metric for Grafana Cloud
-      // Using user_type instead of ip/username to prevent High Cardinality issues
       appAccessCounter.add(1, {
         user_type: finalUserId ? "member" : "guest"
       });
-
-      // Record visit to AccessLog table (1 row per session, deduped per IP/60s)
-      if (!isDuplicateVisit(ip, finalUserId)) {
-        db.accessLog.create({
-          data: {
-            ip,
-            userId: finalUserId,
-            username,
-            userAgent: userAgent || '',
-            method: 'ACCESS',
-            path: '/',
-            status: 200,
-            durationMs: 0,
-            bytesSent: 0,
-          },
-        }).catch((err: unknown) => console.error('Failed to write visit access log:', err));
-      }
 
       return { success: true };
     } catch (e) {
       console.error("Failed to record access log:", e);
       set.status = 500;
       return { error: "Failed to record access log" };
-    }
-  })
-
-  // GET /access-logs - Fetch access logs (Admin only)
-  .get("/", async ({ headers, set }) => {
-    const userId = headers["x-user-id"];
-    if (!userId) {
-      set.status = 401;
-      return { error: "Unauthorized" };
-    }
-
-    // Verify requesting user is an Admin
-    const user = await db.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (!user || user.role !== "ADMIN") {
-      set.status = 403;
-      return { error: "Forbidden. Admin access required." };
-    }
-
-    try {
-      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-      const logs = await db.accessLog.findMany({
-        where: {
-          createdAt: {
-            gte: thirtyMinutesAgo
-          }
-        },
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: {
-              username: true,
-              email: true,
-              avatarColor: true,
-              avatarUrl: true
-            }
-          }
-        },
-        take: 200 // Limit to last 200 access logs
-      });
-
-      return logs;
-    } catch (e) {
-      console.error("Failed to fetch access logs:", e);
-      set.status = 500;
-      return { error: "Failed to fetch access logs" };
     }
   });
