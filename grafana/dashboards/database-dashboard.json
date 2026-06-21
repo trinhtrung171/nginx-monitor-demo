@@ -2,7 +2,10 @@
   "title": "Database Queries",
   "uid": "database-dashboard",
   "refresh": "30s",
-  "time": { "from": "now-30m", "to": "now" },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
   "schemaVersion": 39,
   "version": 2,
   "panels": [
@@ -10,92 +13,148 @@
       "id": 1,
       "title": "Slow Query Count",
       "type": "stat",
-      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-local"
+      },
       "targets": [
         {
           "expr": "(sum(increase(slow_query_total[$__range])) or vector(0))",
           "legendFormat": "Slow queries"
         }
       ],
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 }
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      }
     },
     {
       "id": 2,
       "title": "Query Rate",
       "type": "stat",
-      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-local"
+      },
       "targets": [
         {
           "expr": "(sum(rate(db_queries_total[$__range])) or vector(0))",
           "legendFormat": "queries/s"
         }
       ],
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 }
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      }
     },
     {
       "id": 3,
       "title": "Avg Query Duration",
       "type": "stat",
-      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-local"
+      },
       "targets": [
         {
           "expr": "sum(increase(db_query_duration_milliseconds_sum[$__range])) / (sum(increase(db_query_duration_milliseconds_count[$__range])) > 0) or vector(0)",
           "legendFormat": "ms"
         }
       ],
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 }
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      }
     },
     {
       "id": 4,
       "title": "Queries per Request",
       "type": "stat",
-      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-local"
+      },
       "targets": [
         {
           "expr": "sum(rate(db_queries_total[$__range])) / (sum(rate(http_server_requests_total[$__range])) > 0) or vector(0)",
           "legendFormat": "queries/req"
         }
       ],
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 }
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      }
     },
     {
       "id": 5,
       "title": "Query Duration Over Time",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-local"
+      },
       "targets": [
         {
           "expr": "sum(rate(db_query_duration_milliseconds_sum[$__rate_interval])) / (sum(rate(db_query_duration_milliseconds_count[$__rate_interval])) > 0) or vector(0)",
           "legendFormat": "avg ms"
         }
       ],
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 }
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      }
     },
     {
       "id": 6,
       "title": "Queries per Request Over Time",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus-local" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-local"
+      },
       "targets": [
         {
           "expr": "sum(rate(db_queries_total[$__rate_interval])) / (sum(rate(http_server_requests_total[$__rate_interval])) > 0) or vector(0)",
           "legendFormat": "avg queries/req"
         }
       ],
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 }
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      }
     },
     {
       "id": 7,
       "title": "Live Slow Query Log",
       "type": "logs",
-      "datasource": { "uid": "devshare-loki", "type": "loki" },
+      "datasource": {
+        "uid": "devshare-loki",
+        "type": "loki"
+      },
       "targets": [
         {
-          "expr": "{service_name=\"devshare-backend\"} |= \"slow_query\"",
+          "expr": "{service_name=\"devshare-backend\", type=\"slow_query\"}",
           "legendFormat": ""
         }
       ],
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 }
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      }
     }
   ]
 }
