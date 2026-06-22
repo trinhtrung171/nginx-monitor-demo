@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { db } from "../db";
-import { getClientIp, appAccessCounter } from "../otel-middleware";
+import { getClientIp } from "../otel-middleware";
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -48,11 +48,6 @@ export const accessLogRoutes = new Elysia({ prefix: "/access-logs" })
           username = userExists.username;
         }
       }
-
-      // Record OpenTelemetry Metric for Grafana Cloud
-      appAccessCounter.add(1, {
-        user_type: finalUserId ? "member" : "guest"
-      });
 
       return { success: true };
     } catch (e) {

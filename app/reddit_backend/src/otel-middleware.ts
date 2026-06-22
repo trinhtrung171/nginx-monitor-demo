@@ -12,10 +12,6 @@ const requestDuration = meter.createHistogram('http_server_duration_milliseconds
   description: 'HTTP request duration in milliseconds',
 });
 
-export const appAccessCounter = meter.createCounter('app_access_total', {
-  description: 'Total number of app accesses (opens)',
-});
-
 export const errorCounter = meter.createCounter('app_errors_total', {
   description: 'Total number of unhandled errors',
 });
@@ -112,12 +108,6 @@ export function registerOTel(app: Elysia) {
       });
 
       recordRequest(method, status.toString(), activePath, duration);
-
-      appAccessCounter.add(1, {
-        method,
-        status: status.toString(),
-        path: activePath
-      });
 
       requestDuration.record(duration, {
         method,
