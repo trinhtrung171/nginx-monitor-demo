@@ -321,28 +321,7 @@ open http://localhost:3000
     - **Files changed**:
       - `app/reddit_backend/src/access-logger.ts` — added `db` import
 
-### Session: June 22, 2026 — Pie chart colors + path filter fix
-
-32. **HTTP Status Distribution colors fix**
-    - **Problem**: Pie chart dùng `palette-classic` tự động gán màu → 2xx có thể màu đỏ (không trực quan).
-    - **Fix**: Thêm `color` override cho mỗi slice: 2xx→green, 3xx→yellow, 4xx→orange, 5xx→red, unknown→purple.
-    - **Files changed**:
-      - `grafana/dashboards/user-access-dashboard.json` — Panel 3 overrides
-
-33. **Access Logs (Loki) path filter — trailing slash bug**
-    - **Problem**: Filter `path != "/access-logs"` không match `/access-logs/` (có trailing slash) → POST /access-logs/ không bị filter trong tất cả panels.
-    - **Fix**: Đổi `!=` → `!~` (regex not-match): `path !~ "/access-logs"` match cả có và không trailing slash.
-    - **Scope**: 10 occurrences across all 7 panels.
-    - **Files changed**:
-      - `grafana/dashboards/user-access-dashboard.json` — all panels
-
-34. **Code cleanup — leftover DB writes + neon-to-loki-sync removed**
-    - **access-logger.ts**: Xoá raw `CREATE TABLE IF NOT EXISTS access_log` + `INSERT INTO access_log` (DB write block còn sót sau item 29)
-    - **neon-to-loki-sync/**: Xoá toàn bộ thư mục (sync.py, Dockerfile, sync.sh) — đã dead từ khi AccessLog table dropped
-    - **monitor-docker-compose.yml**: Xoá `neon-to-loki-sync` service
-    - **.env**: Xoá `NEON_DATABASE_URL`
-    - **Result**: Không còn code thừa. Access log pipeline chỉ còn `console.log → Promtail → Loki`.
-
 ### Known Issues / Open Items
 - Loki image distroless → cannot healthcheck with curl/wget. TCP healthcheck needed if depends_on condition is required.
+- `neon-to-loki-sync` permanently stopped — AccessLog table was dropped, sync has no data source. All access logs now come from `console.log(JSON.stringify(logEntry))` via Promtail pipeline.
 - Backend restart needed after the `db` import fix was deployed — any future rebuilds will auto-fix.

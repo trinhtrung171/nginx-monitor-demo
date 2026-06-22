@@ -63,6 +63,7 @@ const errorCounter = new client.Counter({
 });
 
 export function recordError(method: string, path: string) {
+  requestCounter.inc({ method, status: '500', path }, 1);
   errorCounter.inc({ method, path }, 1);
 }
 

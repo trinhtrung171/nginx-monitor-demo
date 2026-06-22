@@ -13,7 +13,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "(sum(increase(http_server_requests_total{job=~"render-backend|devshare-backend"}[$__range])) * 60 / $__range_s) or vector(0)",
+          "expr": "(sum(increase(http_server_requests_total[$__range])) * 60 / $__range_s) or vector(0)",
           "legendFormat": "RPM"
         }
       ],
@@ -33,7 +33,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "(sum(increase(http_server_requests_total{job=~"render-backend|devshare-backend",status=~"5.."}[$__range])) / sum(increase(http_server_requests_total{job=~"render-backend|devshare-backend"}[$__range])) * 100) or vector(0)",
+          "expr": "(sum(increase(http_server_requests_total{status=~\"5..\"}[$__range])) / sum(increase(http_server_requests_total[$__range])) * 100) or vector(0)",
           "legendFormat": "5xx%"
         }
       ],
@@ -62,7 +62,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "(histogram_quantile(0.95, sum by(le) (increase(http_server_duration_milliseconds_bucket{job=~"render-backend|devshare-backend"}[$__range]))) or vector(0))",
+          "expr": "(histogram_quantile(0.95, sum by(le) (increase(http_server_duration_milliseconds_bucket[$__range]))) or vector(0))",
           "legendFormat": "p95"
         }
       ],
@@ -89,7 +89,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "avg(process_cpu_usage{job=~"render-backend|devshare-backend"}) * 100",
+          "expr": "avg(process_cpu_usage) * 100",
           "legendFormat": "CPU %"
         }
       ],
@@ -111,7 +111,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "avg(process_memory_usage_bytes{job=~"render-backend|devshare-backend"})",
+          "expr": "avg(process_memory_usage_bytes)",
           "legendFormat": "RSS"
         }
       ],
@@ -131,7 +131,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-local" },
       "targets": [
         {
-          "expr": "(sum(increase(app_errors_total{job=~"render-backend|devshare-backend"}[$__range])) or vector(0))",
+          "expr": "(sum(increase(app_errors_total[$__range])) or vector(0))",
           "legendFormat": "Errors"
         }
       ],
