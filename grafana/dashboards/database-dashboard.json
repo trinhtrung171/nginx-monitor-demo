@@ -19,7 +19,7 @@
       },
       "targets": [
         {
-          "expr": "(sum(increase(slow_query_total[$__range])) or vector(0))",
+          "expr": "(sum(increase(slow_query_total{job=~"render-backend|devshare-backend"}[$__range])) or vector(0))",
           "legendFormat": "Slow queries"
         }
       ],
@@ -40,7 +40,7 @@
       },
       "targets": [
         {
-          "expr": "(sum(rate(db_queries_total[$__range])) or vector(0))",
+          "expr": "(sum(rate(db_queries_total{job=~"render-backend|devshare-backend"}[$__range])) or vector(0))",
           "legendFormat": "queries/s"
         }
       ],
@@ -61,7 +61,7 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(db_query_duration_milliseconds_sum[$__range])) / (sum(increase(db_query_duration_milliseconds_count[$__range])) > 0) or vector(0)",
+          "expr": "sum(increase(db_query_duration_milliseconds{job=~"render-backend|devshare-backend"}_sum[$__range])) / (sum(increase(db_query_duration_milliseconds{job=~"render-backend|devshare-backend"}_count[$__range])) > 0) or vector(0)",
           "legendFormat": "ms"
         }
       ],
@@ -82,7 +82,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(db_queries_total[$__range])) / (sum(rate(http_server_requests_total[$__range])) > 0) or vector(0)",
+          "expr": "sum(rate(db_queries_total{job=~"render-backend|devshare-backend"}[$__range])) / (sum(rate(http_server_requests_total{job=~"render-backend|devshare-backend"}[$__range])) > 0) or vector(0)",
           "legendFormat": "queries/req"
         }
       ],
@@ -103,7 +103,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(db_query_duration_milliseconds_sum[$__rate_interval])) / (sum(rate(db_query_duration_milliseconds_count[$__rate_interval])) > 0) or vector(0)",
+          "expr": "sum(rate(db_query_duration_milliseconds{job=~"render-backend|devshare-backend"}_sum[$__rate_interval])) / (sum(rate(db_query_duration_milliseconds{job=~"render-backend|devshare-backend"}_count[$__rate_interval])) > 0) or vector(0)",
           "legendFormat": "avg ms"
         }
       ],
@@ -124,7 +124,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(db_queries_total[$__rate_interval])) / (sum(rate(http_server_requests_total[$__rate_interval])) > 0) or vector(0)",
+          "expr": "sum(rate(db_queries_total{job=~"render-backend|devshare-backend"}[$__rate_interval])) / (sum(rate(http_server_requests_total{job=~"render-backend|devshare-backend"}[$__rate_interval])) > 0) or vector(0)",
           "legendFormat": "avg queries/req"
         }
       ],

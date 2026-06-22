@@ -33,7 +33,7 @@ groups:
     interval: 15s
     rules:
       - alert: HighErrorRate
-        expr: rate(http_server_requests_total{status=~"5.."}[5m]) / rate(http_server_requests_total[5m]) * 100 > 1
+        expr: rate(http_server_requests_total{job=~"render-backend|devshare-backend",status=~"5.."}[5m]) / rate(http_server_requests_total{job=~"render-backend|devshare-backend"}[5m]) * 100 > 1
         for: 5m
         labels:
           severity: warning
@@ -42,7 +42,7 @@ groups:
           description: "Error rate: {{ $value | humanize }}%"
 
       - alert: HighLatencyP95
-        expr: histogram_quantile(0.95, rate(http_server_duration_milliseconds_bucket[5m])) > 500
+        expr: histogram_quantile(0.95, rate(http_server_duration_milliseconds_bucket{job=~"render-backend|devshare-backend"}[5m])) > 500
         for: 5m
         labels:
           severity: warning
@@ -50,20 +50,12 @@ groups:
           summary: "P95 latency vượt 500ms"
           description: "P95 latency: {{ $value | humanize }}ms"
 
-      - alert: AppTrafficDrop
-        expr: rate(app_access_total[5m]) < 0.1
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Lưu lượng ứng dụng giảm mạnh"
-          description: "Request rate: {{ $value | humanize }} req/s"
 
   - name: database
     interval: 15s
     rules:
       - alert: SlowQuerySpike
-        expr: rate(slow_query_total[5m]) > 5
+        expr: rate(slow_query_total{job=~"render-backend|devshare-backend"}[5m]) > 5
         for: 5m
         labels:
           severity: warning
