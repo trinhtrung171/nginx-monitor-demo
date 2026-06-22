@@ -6,7 +6,7 @@ import { recordDbQuery, recordSlowQuery } from "./prometheus-exporter";
 
 const meter = metrics.getMeter('app-db');
 const slowQueryCounter = meter.createCounter('slow_query_total', {
-  description: 'Total number of slow queries (>200ms)',
+  description: 'Total number of slow queries (>50ms)',
 });
 slowQueryCounter.add(0);
 

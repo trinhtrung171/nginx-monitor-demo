@@ -45,9 +45,8 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem('ds_user')
     setUser(null)
-    // Defer so React processes setUser → useEffect updates fetchMeta → wrapper picks up null userId
-    // Explicitly read client IP from localStorage (saved by initClientIp) to ensure x-client-ip is always
-    // present — the fetch wrapper may not have resolved clientIp yet, causing isRealUserRequest() to skip the log
+    // Defer to next tick so setUser(null) flushes before fetch wrapper reads fetchMeta.current.userId
+    // The wrapper spread ({ ...extraHeaders, ...init.headers }) ensures our explicit x-user-id: '' wins
     setTimeout(() => {
       const clientIp = localStorage.getItem('client_ip') || ''
       if (clientIp) {
@@ -55,13 +54,15 @@ export function AuthProvider({ children }) {
       } else {
         fetch(`${API}/access-logs`, { method: 'POST' }).catch(() => {})
       }
-    }, 100)
+    }, 0)
   }
 
   const updateUser = (newData) => {
-    const next = { ...user, ...newData }
-    localStorage.setItem('ds_user', JSON.stringify(next))
-    setUser(next)
+    setUser(prev => {
+      const next = { ...(prev || {}), ...newData }
+      localStorage.setItem('ds_user', JSON.stringify(next))
+      return next
+    })
   }
 
   return (

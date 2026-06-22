@@ -346,3 +346,33 @@ open http://localhost:3000
     - **Fix**: Changed `'anonymous'` → `'guest'` in `access-logger.ts:85` to match `accessLogs.ts` terminology.
     - **Files changed**:
       - `app/reddit_backend/src/access-logger.ts` — default `'anonymous'` → `'guest'`
+
+### Session: June 22, 2026 (audit fix)
+
+33. **Full system audit: 14 HIGH+MEDIUM issues fixed**
+    - **HIGH #1**: Removed orphan `access_log` table creation + DB writes from `access-logger.ts` (dead code from session 29 cleanup; only `console.log` → Loki remains)
+    - **HIGH #2**: Fixed `HighRAMUsage` alert metric names in `app_rules.yml` — changed `node_memory_active_bytes + node_memory_wired_bytes / node_memory_total_bytes` → `(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100`
+    - **HIGH #3** (false alarm): `postgres-neon.yml` already gitignored, not tracked by git
+    - **HIGH #4**: Untracked `prometheus/metrics_token.txt`, `prometheus/prometheus.yml`, `alertmanager/alertmanager.yml` from git (already in `.gitignore` but were committed before the ignore rules were added)
+    - **HIGH #5**: Wrapped `new URL(att.url)` in try/catch in `MediaRenderer.jsx` to prevent crash on relative/malformed URLs
+    - **HIGH #6**: Removed dead `AccessLogsModal` component (called deleted `GET /access-logs` endpoint); removed trigger button from admin user menu
+    - **HIGH #7**: Removed `neon-to-loki-sync` service from `monitor-docker-compose.yml` (crash-looping since `access_log` table was dropped)
+    - **MEDIUM #8**: Dashboard filter `username != "anonymous"` → `username != "guest"` (default was changed to "guest" in session 32)
+    - **MEDIUM #9**: Panel 7 path filter `path = "/access-logs/"` → `path = "/access-logs"` (removed trailing slash)
+    - **MEDIUM #10**: Added `| json | line_format` pipeline to Slow Query Log panel in `database-dashboard.json`
+    - **MEDIUM #11**: Fixed `slow_query_total` description from `(>200ms)` to `(>50ms)` in `db.ts`
+    - **MEDIUM #12**: Added `console.error` to the empty `fetch2` catch block in `App.jsx`
+    - **MEDIUM #13**: Reduced `setTimeout(100)` → `setTimeout(0)` in `AuthContext.jsx` (race condition already solved by spread order fix)
+    - **MEDIUM #14**: Fixed `updateUser` to use functional `setUser(prev => ...)` pattern to avoid stale state under concurrent calls in `AuthContext.jsx`
+    - **Files changed** (11):
+      - `app/reddit_backend/src/access-logger.ts` — removed CREATE TABLE + INSERT
+      - `app/reddit_backend/src/db.ts` — fixed description
+      - `app/reddit_frontend/src/App.jsx` — removed AccessLogsModal + empty catch fix
+      - `app/reddit_frontend/src/AuthContext.jsx` — setTimeout(0) + functional updateUser
+      - `app/reddit_frontend/src/MediaRenderer.jsx` — try/catch URL
+      - `grafana/dashboards/database-dashboard.json` — Slow Query Log formatting
+      - `grafana/dashboards/user-access-dashboard.json` — anonymous→guest, trailing slash
+      - `monitor-docker-compose.yml` — removed neon-to-loki-sync
+      - `prometheus/app_rules.yml` — fixed RAM alert metric
+      - `.gitignore` — added metrics_token.txt
+      - `alertmanager/alertmanager.yml`, `prometheus/prometheus.yml`, `prometheus/metrics_token.txt` — untracked from git`

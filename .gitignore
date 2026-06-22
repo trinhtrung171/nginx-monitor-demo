@@ -6,6 +6,7 @@
 # Sensitive configuration files
 alertmanager/alertmanager.yml
 prometheus/prometheus.yml
+prometheus/metrics_token.txt
 
 # Grafana provisioning
 grafana/provisioning/datasources/

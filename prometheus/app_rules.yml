@@ -12,7 +12,7 @@ groups:
           description: "CPU usage hiện tại: {{ $value | humanize }}%"
 
       - alert: HighRAMUsage
-        expr: (node_memory_active_bytes + node_memory_wired_bytes) / node_memory_total_bytes * 100 > 80
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 80
         for: 5m
         labels:
           severity: warning

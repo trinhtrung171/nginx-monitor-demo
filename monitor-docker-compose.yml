@@ -96,19 +96,6 @@ services:
       - global-monitor-net
     restart: unless-stopped
 
-  # Sync Neon DB access logs (production data) to local Loki
-  # This brings real IP, username, and device info from Render users into Grafana
-  neon-to-loki-sync:
-    build: ./neon-to-loki-sync
-    container_name: neon-to-loki-sync
-    environment:
-      - NEON_DATABASE_URL=${NEON_DATABASE_URL}
-      - LOKI_URL=http://loki:3100
-    networks:
-      - global-monitor-net
-    depends_on:
-      - loki
-    restart: unless-stopped
   
   # Blackbox exporter: probe external HTTP/HTTPS endpoints (e.g., Vercel apps)
   blackbox-exporter:
