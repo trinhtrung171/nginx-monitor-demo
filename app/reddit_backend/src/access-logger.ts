@@ -82,7 +82,7 @@ export function registerAccessLogger(app: Elysia) {
       const userAgent = request.headers.get('user-agent') || '';
       const rawUserId = request.headers.get('x-user-id');
       let userId = rawUserId || null;
-      const username = rawUserId ? await getUsername(rawUserId) : 'anonymous';
+      const username = rawUserId ? await getUsername(rawUserId) : 'guest';
       if (rawUserId && username === 'anonymous') userId = null;
 
       const bytesSent = computeBytesSent(response);

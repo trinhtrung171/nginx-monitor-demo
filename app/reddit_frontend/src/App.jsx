@@ -309,7 +309,7 @@ export default function App() {
       const extraHeaders = {};
       if (userId) extraHeaders['x-user-id'] = userId;
       if (clientIp) extraHeaders['x-client-ip'] = clientIp;
-      init.headers = { ...init.headers, ...extraHeaders };
+      init.headers = { ...extraHeaders, ...init.headers };
       return origFetch(input, init);
     };
   }, []);

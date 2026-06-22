@@ -45,11 +45,17 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem('ds_user')
     setUser(null)
-    // Defer to next tick so React processes setUser → useEffect updates fetchMeta → wrapper picks up null userId
-    // Without this, fetchMeta.current.userId still has old value → fetch wrapper adds stale x-user-id → guest entry deduped
+    // Defer so React processes setUser → useEffect updates fetchMeta → wrapper picks up null userId
+    // Explicitly read client IP from localStorage (saved by initClientIp) to ensure x-client-ip is always
+    // present — the fetch wrapper may not have resolved clientIp yet, causing isRealUserRequest() to skip the log
     setTimeout(() => {
-      fetch(`${API}/access-logs`, { method: 'POST' }).catch(() => {})
-    }, 0)
+      const clientIp = localStorage.getItem('client_ip') || ''
+      if (clientIp) {
+        fetch(`${API}/access-logs`, { method: 'POST', headers: { 'x-client-ip': clientIp, 'x-user-id': '' } }).catch(() => {})
+      } else {
+        fetch(`${API}/access-logs`, { method: 'POST' }).catch(() => {})
+      }
+    }, 100)
   }
 
   const updateUser = (newData) => {

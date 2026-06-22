@@ -325,3 +325,24 @@ open http://localhost:3000
 - Loki image distroless → cannot healthcheck with curl/wget. TCP healthcheck needed if depends_on condition is required.
 - `neon-to-loki-sync` permanently stopped — AccessLog table was dropped, sync has no data source. All access logs now come from `console.log(JSON.stringify(logEntry))` via Promtail pipeline.
 - Backend restart needed after the `db` import fix was deployed — any future rebuilds will auto-fix.
+
+### Session: June 22, 2026
+
+31. **Guest POST after logout shows test02 instead of anonymous (race condition fix)**
+    - **Problem**: After logout, the deferred guest POST (setTimeout 100ms) still recorded as `test02` instead of `anonymous`/guest. The access log showed 2 test02 entries (1 logout + 1 incorrectly as test02) instead of 1 test02 + 1 anonymous.
+    - **Root cause**: `App.jsx:312` fetch wrapper used `{ ...init.headers, ...extraHeaders }` — `extraHeaders` won over the caller's explicit headers. When `fetchMeta.current.userId` had stale `test02-id` (React `setUser(null)` hadn't flushed yet), the wrapper added `x-user-id: test02-id` regardless of the guest POST's intent. The `setTimeout(100)` was unreliable because React state updates are async.
+    - **Fix**:
+      - `App.jsx:312` — Changed spread to `{ ...extraHeaders, ...init.headers }` so the **caller's** explicit headers take precedence over the wrapper's inferred headers.
+      - `AuthContext.jsx:54` — Guest POST now explicitly passes `x-user-id: ''` (empty string, falsy), which overrides any stale `x-user-id` from the wrapper and ensures the backend treats it as guest.
+    - **Files changed**:
+      - `app/reddit_frontend/src/App.jsx` — wrapper spread order reversed
+      - `app/reddit_frontend/src/AuthContext.jsx` — explicit `x-user-id: ''` in guest POST
+
+32. **Logout shows 3 entries (`test02 → anonymous → test02`) — terminology + timing fix**
+    - **Problem**: After logout, log shows `test02 → anonymous → test02` (3 entries) instead of expected `test02 → guest`. `anonymous` and second `test02` share same timestamp.
+    - **Root cause 1 (terminology)**: `access-logger.ts:85` defaults to `'anonymous'` when no `x-user-id`, but `accessLogs.ts:41` defaults to `'guest'`. Two different defaults for guest sessions.
+    - **Root cause 2 (ordering)**: The first POST (oldUserId) calls `getUsername('test02-id')` which does a DB lookup — takes longer than the guest POST which skips the DB call. So the guest POST's `onAfterResponse` fires first despite being called later (setTimeout 100ms). Both finish within the same millisecond → same timestamp.
+    - **Result**: 3 entries are **expected** — 1 browsing request + 2 logout POSTs. Order is `browsing(test02) → guest(anonymous) → logout(test02)`.
+    - **Fix**: Changed `'anonymous'` → `'guest'` in `access-logger.ts:85` to match `accessLogs.ts` terminology.
+    - **Files changed**:
+      - `app/reddit_backend/src/access-logger.ts` — default `'anonymous'` → `'guest'`
