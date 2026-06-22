@@ -138,7 +138,7 @@ export default function MediaRenderer({ post, isFeed = false }) {
               <small>
                 {preview?.siteName && <span className="link-site-name">{preview.siteName}</span>}
                 <ExternalLink size={10} style={{ marginRight: 4 }} />
-                {(() => { try { return new URL(att.url).hostname.replace('www.', '') } catch { return att.url } })()}
+                {new URL(att.url).hostname.replace('www.', '')}
               </small>
             </div>
           </a>

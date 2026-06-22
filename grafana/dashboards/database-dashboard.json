@@ -145,7 +145,7 @@
       },
       "targets": [
         {
-          "expr": "{service_name=\"devshare-backend\", type=\"slow_query\"} | json | __error__=\"\" | line_format \"⏱ {{ .duration_ms | substr 0 6 }}ms\\n{{ .query }}\"",
+          "expr": "{service_name=\"devshare-backend\", type=\"slow_query\"}",
           "legendFormat": ""
         }
       ],
