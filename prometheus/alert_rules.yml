@@ -17,7 +17,7 @@ groups:
 
       # Alert 2: Nginx Request Rate Drop (đột nhiên không có request — có thể NGƯNG HOẠT ĐỘNG)
       - alert: NginxRequestRateDrop
-        expr: rate(nginx_http_requests_total[5m]) < 1
+        expr: rate(nginx_http_requests_total[5m]) < 1 AND (rate(nginx_http_requests_total[30m]) - rate(nginx_http_requests_total[5m])) > 5
         for: 5m
         labels:
           severity: warning

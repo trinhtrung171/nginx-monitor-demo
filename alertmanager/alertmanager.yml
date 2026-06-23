@@ -12,7 +12,7 @@ route:
   receiver: 'email-notification'
   group_by: ['alertname', 'cluster', 'service']
   group_wait: 10s          # Chờ 10 giây để gom nhóm các cảnh báo
-  group_interval: 10s      # Kiểm tra nhóm mỗi 10 giây
+  group_interval: 5m       # Kiểm tra nhóm mỗi 5 phút
   repeat_interval: 12h     # Gửi lại cảnh báo mỗi 12 giờ nếu vẫn còn
 
 # Định nghĩa các receiver (người nhận)
@@ -44,4 +44,4 @@ inhibit_rules:
       severity: 'critical'
     target_match_re:
       severity: 'warning|info'
-    equal: ['alertname', 'instance']
+    equal: ['instance']

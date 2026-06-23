@@ -51,6 +51,36 @@ groups:
           description: "P95 latency: {{ $value | humanize }}ms"
 
 
+  - name: services
+    interval: 15s
+    rules:
+      - alert: BackendDown
+        expr: up{job=~"devshare-backend|render-backend"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend service is down ({{ $labels.job }})"
+          description: "Backend target {{ $labels.instance }} ({{ $labels.job }}) is unreachable. Check container or Render deployment."
+
+      - alert: OtelCollectorDown
+        expr: up{job="otel-collector"} == 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "OTel Collector is down"
+          description: "OpenTelemetry Collector {{ $labels.instance }} is unreachable. Check otel-collector container."
+
+      - alert: BlackboxHighLatency
+        expr: probe_duration_seconds{job="blackbox"} > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Blackbox probe latency cao ({{ $labels.instance }})"
+          description: "Probe {{ $labels.instance }} took {{ $value | humanize }}s — vượt ngưỡng 5s."
+
   - name: database
     interval: 15s
     rules:
